@@ -180,7 +180,7 @@ summary{cursor:pointer;font-weight:800}
 }
 @page{size:A4;margin:16mm 14mm}
 @media print{
-  .side,.top,.scrim,.noprint,.acts,.toast{display:none!important}
+  .side,.top,.scrim,.noprint,.acts,.toast,#v-rekap>h1,#v-rekap>.sub{display:none!important}
   .app{display:block} body{background:#fff;color:#000;font-size:11pt}
   .card{border:0;padding:0;margin:0 0 10px!important;background:#fff} main{padding:0;max-width:none;margin:0}
   .kop{border-bottom:2px solid #000} .kop .k3,.rsum div,.rsum b,.ct{color:#000}
@@ -319,6 +319,7 @@ summary{cursor:pointer;font-weight:800}
       </details>
       <div class="card noprint" style="margin-bottom:16px"><b>Isi rekap</b>
         <div class="bar" style="margin:10px 0 14px">
+          <label class="rtl" style="flex:1 1 180px"><input type="checkbox" class="cb" id="rOpt0" checked> Kartu ringkasan angka</label>
           <label class="rtl" style="flex:1 1 180px"><input type="checkbox" class="cb" id="rOpt1" checked> Ringkasan per kategori</label>
           <label class="rtl" style="flex:1 1 180px"><input type="checkbox" class="cb" id="rOpt2" checked> Pekerjaan paling sering</label>
           <label class="rtl" style="flex:1 1 180px"><input type="checkbox" class="cb" id="rOpt3" checked> Rincian per tanggal</label>
@@ -750,7 +751,10 @@ summary{cursor:pointer;font-weight:800}
   var CF={sSekolah:'sekolah',sKota:'kota',sNama:'nama',sJabatan:'jabatan',sAtasan:'atasan',sJabAtasan:'jabAtasan'};
   function loadCfg(){try{var c=JSON.parse(localStorage.getItem(SKEY)||'null');if(c&&typeof c==='object')cfg=Object.assign(cfg,c)}catch(e){}}
   function saveCfg(){try{localStorage.setItem(SKEY,JSON.stringify(cfg))}catch(e){}}
-  function cfgFields(){Object.keys(CF).forEach(function(id){$(id).value=cfg[CF[id]]||''})}
+  function cfgFields(){
+    Object.keys(CF).forEach(function(id){$(id).value=cfg[CF[id]]||''});
+    var ro=cfg.rOpts;if(Array.isArray(ro))['rOpt0','rOpt1','rOpt2','rOpt3'].forEach(function(id,i){if(ro[i]!==undefined)$(id).checked=!!ro[i]});
+  }
   Object.keys(CF).forEach(function(id){$(id).oninput=function(){cfg[CF[id]]=this.value.trim();saveCfg();renderRekap()}});
   function rFillFilters(){
     var ck=$('rKat').value,cj=$('rJudul').value,kl=kats.slice();
@@ -822,10 +826,10 @@ summary{cursor:pointer;font-weight:800}
       }
     }
     var n=new Date(),sign='<div class="sign"><div><div>Mengetahui,</div><div>'+esc(cfg.jabAtasan||'Kepala Sekolah')+'</div><div class="sp"></div><b>'+esc(cfg.atasan||'……………………………')+'</b></div><div><div>'+(cfg.kota?esc(cfg.kota)+', ':'')+n.getDate()+' '+BULAN[n.getMonth()]+' '+n.getFullYear()+'</div><div>'+esc(cfg.jabatan||'Pustakawan')+'</div><div class="sp"></div><b>'+esc(cfg.nama||'……………………………')+'</b></div></div>';
-    $('rIsi').innerHTML='<div class="card paper">'+kop+sum+body+sign+'</div>';
+    $('rIsi').innerHTML='<div class="card paper">'+kop+($('rOpt0').checked?sum:'')+body+sign+'</div>';
   }
   ['rMode','rBulan','rTahun','rDari','rSampai','rKat','rJudul'].forEach(function(id){$(id).oninput=function(){rExcl={};renderRekap()}});
-  ['rOpt1','rOpt2','rOpt3'].forEach(function(id){$(id).onchange=renderRekap});
+  ['rOpt0','rOpt1','rOpt2','rOpt3'].forEach(function(id){$(id).onchange=function(){cfg.rOpts=['rOpt0','rOpt1','rOpt2','rOpt3'].map(function(x){return $(x).checked});saveCfg();renderRekap()}});
   $('rTglList').addEventListener('change',function(ev){var k=ev.target.dataset.rt;if(!k)return;if(ev.target.checked)delete rExcl[k];else rExcl[k]=true;renderRekap()});
   $('rAll').onclick=function(){rExcl={};renderRekap()};
   $('rNone').onclick=function(){rekapPeriode().forEach(function(e){rExcl[e.tgl]=true});renderRekap()};
