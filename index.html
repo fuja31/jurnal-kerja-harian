@@ -239,7 +239,7 @@ summary{cursor:pointer;font-weight:800}
       <h1>To-do list</h1>
       <p class="sub">Pekerjaan yang punya tenggat. Pengingat muncul di Beranda mulai 3 hari sebelum tenggat.</p>
       <div class="card noprint" style="margin-bottom:20px">
-        <div class="field"><label for="tJudul">Pekerjaan</label><input id="tJudul" list="daftarJudul" maxlength="140" autocomplete="off" placeholder="Contoh: Serahkan laporan stock opname"></div>
+        <div class="field"><label for="tJudul">Pekerjaan</label><input id="tJudul" list="tdl" maxlength="140" autocomplete="off" placeholder="Contoh: Serahkan laporan stock opname"><datalist id="tdl"></datalist></div>
         <div class="row">
           <div class="field"><label for="tTenggat">Tenggat (opsional)</label><input type="date" id="tTenggat"></div>
           <div class="field"><label for="tKat">Kategori</label><select id="tKat"></select></div>
@@ -299,6 +299,7 @@ summary{cursor:pointer;font-weight:800}
           <input type="date" id="rDari" class="hide" aria-label="Dari tanggal">
           <input type="date" id="rSampai" class="hide" aria-label="Sampai tanggal">
         </div>
+        <div class="bar"><select id="rKat" aria-label="Filter kategori"></select><select id="rJudul" aria-label="Filter jenis pekerjaan"></select></div>
         <div class="bar" style="margin-bottom:0"><button class="btn soft" data-rp="minggu">Minggu ini</button><button class="btn soft" data-rp="bulan">Bulan ini</button><button class="btn soft" data-rp="lalu">Bulan lalu</button></div>
       </div>
       <details class="card noprint" style="margin-bottom:16px"><summary>Pilih tanggal yang dicetak <span id="rTglInfo" style="color:var(--muted);font-weight:600"></span></summary>
@@ -335,7 +336,7 @@ summary{cursor:pointer;font-weight:800}
         <h2 id="formJudul" style="margin:0 0 14px;font-size:18px">Catat pekerjaan</h2>
         <div class="field" style="max-width:260px"><label for="fTgl">Tanggal</label><input type="date" id="fTgl"></div>
         <div id="rows"></div>
-        <datalist id="daftarJudul"></datalist>
+        
         <div class="bar" style="margin-bottom:0">
           <button class="btn soft" id="tambahBaris" type="button" style="flex:1 1 200px">+ Tambah pekerjaan lain</button>
           <button class="btn" id="simpan" type="button" style="flex:1 1 200px">Simpan semua</button>
@@ -599,13 +600,18 @@ summary{cursor:pointer;font-weight:800}
 
   /* form */
   var rows=[],editing=0,STAT=['Selesai','Proses','Tertunda'];
+  function titleOpts(kat){
+    var cnt={};data.forEach(function(e){if(e.kat===kat)cnt[e.judul]=(cnt[e.judul]||0)+1});
+    return Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]||a.localeCompare(b)}).slice(0,200).map(function(j){return '<option value="'+esc(j)+'">'}).join('');
+  }
+  function fillTdl(){$('tdl').innerHTML=titleOpts($('tKat').value)}
   function optHtml(sel){var l=kats.slice();if(sel&&l.indexOf(sel)<0)l.push(sel);return l.map(function(k){return '<option'+(k===sel?' selected':'')+'>'+esc(k)+'</option>'}).join('')}
   function newRow(p){p=p||{};return{kat:p.kat||kats[0]||'',judul:p.judul||'',status:p.status||'Selesai',catatan:p.catatan||''}}
   function rowHtml(r,i){
     return '<div class="rowbox"><div class="rowhead"><b>'+(editing?'Ubah pekerjaan':'Pekerjaan '+(i+1))+'</b>'+(rows.length>1?'<button type="button" class="link" data-rm="'+i+'">Hapus baris</button>':'')+'</div>'+
       '<div class="row"><div class="field"><label>Kategori</label><select data-f="kat">'+optHtml(r.kat)+'</select></div>'+
       '<div class="field"><label>Status</label><select data-f="status">'+STAT.map(function(x){return '<option'+(x===r.status?' selected':'')+'>'+x+'</option>'}).join('')+'</select></div></div>'+
-      '<div class="field"><label>Pekerjaan</label><input data-f="judul" list="daftarJudul" autocomplete="off" maxlength="140" placeholder="Ketik, atau pilih dari pekerjaan sebelumnya" value="'+esc(r.judul)+'"></div>'+
+      '<div class="field"><label>Pekerjaan</label><input data-f="judul" list="dl'+i+'" autocomplete="off" maxlength="140" placeholder="Ketik, atau pilih dari pekerjaan di kategori ini" value="'+esc(r.judul)+'"><datalist id="dl'+i+'">'+titleOpts(r.kat)+'</datalist></div>'+
       '<div class="field"><label>Catatan (opsional)</label><input data-f="catatan" placeholder="Keterangan tambahan" value="'+esc(r.catatan)+'"></div></div>';
   }
   function collect(){
@@ -627,12 +633,11 @@ summary{cursor:pointer;font-weight:800}
     return j;
   }
   function refreshLists(){
-    var cnt={};data.forEach(function(e){cnt[e.judul]=(cnt[e.judul]||0)+1});
-    $('daftarJudul').innerHTML=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]||a.localeCompare(b)}).slice(0,300).map(function(j){return '<option value="'+esc(j)+'">'}).join('');
-    var cur=$('qKat').value;
+        var cur=$('qKat').value;
     $('qKat').innerHTML='<option value="">Semua kategori</option>'+optHtml('');
     $('qKat').value=cur;
     if(rows.length){collect();renderRows()}
+    fillTdl();
   }
   function renderKat(){
     $('kList').innerHTML=kats.map(function(k,i){
@@ -659,15 +664,7 @@ summary{cursor:pointer;font-weight:800}
   };
   $('batal').onclick=function(){resetForm()};
   $('tambahCepat').onclick=function(){show('jurnal');resetForm();focusJudul(0)};
-  $('rows').addEventListener('input',function(ev){
-    var t=ev.target;if(t.dataset.f!=='judul')return;
-    if(ev.inputType&&ev.inputType!=='insertReplacementText')return;
-    var lj=t.value.trim().toLowerCase();
-    for(var i=data.length-1;i>=0;i--){
-      if(data[i].judul.toLowerCase()===lj){t.closest('.rowbox').querySelector('[data-f=kat]').value=data[i].kat;break}
-    }
-  });
-
+  
   function tambahKat(){
     var nm=$('kBaru').value.replace(/\s+/g,' ').trim();
     if(!nm){toast('Tulis nama kategorinya');return}
@@ -755,7 +752,19 @@ summary{cursor:pointer;font-weight:800}
   function saveCfg(){try{localStorage.setItem(SKEY,JSON.stringify(cfg))}catch(e){}}
   function cfgFields(){Object.keys(CF).forEach(function(id){$(id).value=cfg[CF[id]]||''})}
   Object.keys(CF).forEach(function(id){$(id).oninput=function(){cfg[CF[id]]=this.value.trim();saveCfg();renderRekap()}});
+  function rFillFilters(){
+    var ck=$('rKat').value,cj=$('rJudul').value,kl=kats.slice();
+    data.forEach(function(e){if(kl.indexOf(e.kat)<0)kl.push(e.kat)});
+    $('rKat').innerHTML='<option value="">Semua kategori</option>'+kl.map(function(k){return '<option'+(k===ck?' selected':'')+'>'+esc(k)+'</option>'}).join('');
+    var js={};data.forEach(function(e){if(!ck||e.kat===ck)js[e.judul]=1});
+    if(cj&&!js[cj])cj='';
+    $('rJudul').innerHTML='<option value="">Semua jenis pekerjaan</option>'+Object.keys(js).sort(function(a,b){return a.localeCompare(b)}).map(function(j){return '<option'+(j===cj?' selected':'')+'>'+esc(j)+'</option>'}).join('');
+  }
   function rekapPeriode(){
+    var rk=$('rKat').value,rj=$('rJudul').value;
+    return rekapPeriode0().filter(function(e){return (!rk||e.kat===rk)&&(!rj||e.judul===rj)});
+  }
+  function rekapPeriode0(){
     var m=$('rMode').value,b=$('rBulan').value,y=String($('rTahun').value),da=$('rDari').value,sa=$('rSampai').value;
     return data.filter(function(e){
       if(m==='semua')return true;
@@ -774,6 +783,7 @@ summary{cursor:pointer;font-weight:800}
   }
   function tbl(head,rws){return '<div class="scroll"><table class="tbl"><thead><tr>'+head+'</tr></thead><tbody>'+rws+'</tbody></table></div>'}
   function renderRekap(){
+    rFillFilters();
     var m=$('rMode').value;
     $('rBulan').classList.toggle('hide',m!=='bulan');$('rTahun').classList.toggle('hide',m!=='tahun');
     $('rDari').classList.toggle('hide',m!=='rentang');$('rSampai').classList.toggle('hide',m!=='rentang');
@@ -785,7 +795,8 @@ summary{cursor:pointer;font-weight:800}
     $('rTglInfo').textContent=keys.length?'('+(keys.length-nEx)+' dari '+keys.length+' tanggal)':'';
     function c(st){return l.filter(function(e){return e.status===st}).length}
     var hn={};l.forEach(function(e){hn[e.tgl]=1});
-    var kop='<div class="kop">'+(cfg.sekolah?'<div class="k1">'+esc(cfg.sekolah)+'</div>':'')+'<div class="k2">REKAP PEKERJAAN PUSTAKAWAN</div><div class="k3">Periode: '+esc(rekapJudul()||'-')+'</div></div>';
+    var rkv=$('rKat').value,rjv=$('rJudul').value,rfl=(rkv||rjv)?'<div class="k3">'+(rkv?'Kategori: '+esc(rkv):'')+(rkv&&rjv?' · ':'')+(rjv?'Pekerjaan: '+esc(rjv):'')+'</div>':'';
+    var kop='<div class="kop">'+(cfg.sekolah?'<div class="k1">'+esc(cfg.sekolah)+'</div>':'')+'<div class="k2">REKAP PEKERJAAN PUSTAKAWAN</div><div class="k3">Periode: '+esc(rekapJudul()||'-')+'</div>'+rfl+'</div>';
     var sum='<div class="rsum"><div><b>'+l.length+'</b>Total</div><div><b>'+c('Selesai')+'</b>Selesai</div><div><b>'+c('Proses')+'</b>Proses</div><div><b>'+c('Tertunda')+'</b>Tertunda</div><div><b>'+Object.keys(hn).length+'</b>Hari tercatat</div></div>';
     var body='';
     if(!l.length)body='<div class="empty">'+(m==='rentang'&&!($('rDari').value&&$('rSampai').value)?'Pilih tanggal awal dan akhir.':'Belum ada catatan pada periode ini.')+'</div>';
@@ -813,7 +824,7 @@ summary{cursor:pointer;font-weight:800}
     var n=new Date(),sign='<div class="sign"><div><div>Mengetahui,</div><div>'+esc(cfg.jabAtasan||'Kepala Sekolah')+'</div><div class="sp"></div><b>'+esc(cfg.atasan||'……………………………')+'</b></div><div><div>'+(cfg.kota?esc(cfg.kota)+', ':'')+n.getDate()+' '+BULAN[n.getMonth()]+' '+n.getFullYear()+'</div><div>'+esc(cfg.jabatan||'Pustakawan')+'</div><div class="sp"></div><b>'+esc(cfg.nama||'……………………………')+'</b></div></div>';
     $('rIsi').innerHTML='<div class="card paper">'+kop+sum+body+sign+'</div>';
   }
-  ['rMode','rBulan','rTahun','rDari','rSampai'].forEach(function(id){$(id).oninput=function(){rExcl={};renderRekap()}});
+  ['rMode','rBulan','rTahun','rDari','rSampai','rKat','rJudul'].forEach(function(id){$(id).oninput=function(){rExcl={};renderRekap()}});
   ['rOpt1','rOpt2','rOpt3'].forEach(function(id){$(id).onchange=renderRekap});
   $('rTglList').addEventListener('change',function(ev){var k=ev.target.dataset.rt;if(!k)return;if(ev.target.checked)delete rExcl[k];else rExcl[k]=true;renderRekap()});
   $('rAll').onclick=function(){rExcl={};renderRekap()};
@@ -967,6 +978,11 @@ summary{cursor:pointer;font-weight:800}
       urg.slice(0,5).map(function(t){return '<li>'+esc(t.judul)+' – '+dueInfo(t.tenggat).x+'</li>'}).join('')+'</ul>'+(urg.length>5?'<div>dan '+(urg.length-5)+' lainnya</div>':'')+
       '<button class="link" style="padding-left:0" data-go="todo">Buka To-do</button></div></div>';
   }
+  $('rows').addEventListener('change',function(ev){
+    var t=ev.target;if(t.dataset.f!=='kat')return;
+    t.closest('.rowbox').querySelector('datalist').innerHTML=titleOpts(t.value);
+  });
+  $('tKat').onchange=fillTdl;
   $('tFilter').oninput=renderTodo;
   $('tBatal').onclick=tReset;
   $('tSimpan').onclick=function(){
@@ -984,7 +1000,7 @@ summary{cursor:pointer;font-weight:800}
     else if(d.ttog){todos.forEach(function(x){if(x.id===+d.ttog)x.selesai=!x.selesai});save();render()}
     else if(d.tedit){
       var t=cari(d.tedit);if(!t)return;
-      tEditing=t.id;$('tJudul').value=t.judul;$('tTenggat').value=t.tenggat||'';$('tKat').innerHTML=optHtml(t.kat);$('tCatatan').value=t.catatan||'';
+      tEditing=t.id;$('tJudul').value=t.judul;$('tTenggat').value=t.tenggat||'';$('tKat').innerHTML=optHtml(t.kat);fillTdl();$('tCatatan').value=t.catatan||'';
       $('tSimpan').textContent='Simpan perubahan';$('tBatal').classList.remove('hide');$('tJudul').focus();window.scrollTo(0,0);
     }else if(d.tdel){
       if(confirm('Hapus to-do ini?')){todos=todos.filter(function(x){return x.id!==+d.tdel});save();render();toast('To-do dihapus')}
