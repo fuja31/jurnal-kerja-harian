@@ -1,0 +1,21 @@
+{
+  "id": "./",
+  "name": "Jurnal Pustakawan",
+  "short_name": "Jurnal",
+  "description": "Jurnal pekerjaan harian, to-do, kalender, dan register arsip untuk pustakawan sekolah.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f3faf5",
+  "theme_color": "#2f6fb3",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

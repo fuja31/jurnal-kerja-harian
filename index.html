@@ -1,0 +1,1258 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jurnal Pustakawan</title>
+<meta name="description" content="Jurnal pekerjaan harian, to-do, kalender, dan register arsip untuk pustakawan sekolah. Data tersimpan di browser.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#2f6fb3">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Jurnal">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3faf5; --card:#ffffff; --ink:#1d3345; --muted:#5f7584; --line:#dbeadf;
+  --green:#a8dcb5; --green-soft:#e3f4e8; --blue:#2f6fb3; --blue-soft:#e4effa; --blue-dark:#1f5088;
+  --warn:#c77d1a; --warn-soft:#fdf1dc; --ok:#2e8b57; --ok-soft:#dff3e7; --bad:#b3402f; --bad-soft:#fbe6e2; --ag:#7a56c2; --ag-soft:#ece6f8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101a17; --card:#18262a; --ink:#e6f1ec; --muted:#9bb2ad; --line:#26393a;
+    --green:#3f8a58; --green-soft:#1d3a2b; --blue:#6aa8e6; --blue-soft:#1b3047; --blue-dark:#8cc0f2;
+    --warn:#e3a54f; --warn-soft:#3a2f1a; --ok:#6fcf97; --ok-soft:#1d3a2b; --bad:#f0907f; --bad-soft:#40211d; --ag:#b9a0f0; --ag-soft:#2b2340;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;background:var(--bg);color:var(--ink);line-height:1.55;font-size:16px}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+.app{min-height:100vh}
+.side{position:fixed;top:0;left:0;bottom:0;width:272px;max-width:84vw;background:var(--card);border-right:1px solid var(--line);padding:24px 16px;z-index:40;overflow-y:auto;transform:translateX(-102%);visibility:hidden;transition:transform .22s,visibility 0s .22s}
+.side.open{transform:none;visibility:visible;box-shadow:0 0 40px rgba(20,40,50,.25);transition:transform .22s}
+.scrim{position:fixed;inset:0;background:rgba(20,40,50,.4);z-index:30;opacity:0;pointer-events:none;transition:opacity .2s}
+.scrim.show{opacity:1;pointer-events:auto}
+.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:12px;padding:10px clamp(16px,4vw,48px);padding-top:calc(10px + env(safe-area-inset-top,0px));background:var(--bg);border-bottom:1px solid var(--line)}
+.top b{font-size:18px;font-weight:800}
+.burger{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:grid;place-items:center}
+.burger:hover{background:var(--green-soft)}
+.titem{display:grid;grid-template-columns:auto 1fr auto;gap:12px;padding:12px 4px;border-top:1px solid var(--line);align-items:start}
+.titem:first-child{border-top:0}
+.titem h3{margin:0 0 4px;font-size:16px;font-weight:700}
+.titem p{margin:4px 0 0;color:var(--muted);font-size:14px}
+.titem.done h3{text-decoration:line-through;color:var(--muted)}
+.chk{width:26px;height:26px;border-radius:50%;border:2px solid var(--blue);background:var(--card);cursor:pointer;color:#fff;display:grid;place-items:center;font-weight:800;line-height:1;padding:0;margin-top:1px}
+.chk.on{background:var(--ok);border-color:var(--ok)}
+.due{display:inline-block;font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px;margin-right:6px}
+.due.late{background:var(--bad-soft);color:var(--bad)}
+.due.soon{background:var(--warn-soft);color:var(--warn)}
+.due.ok{background:var(--blue-soft);color:var(--blue-dark)}
+.due.none{background:var(--green-soft);color:var(--muted)}
+.alert{border-radius:16px;padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start}
+.alert.late{background:var(--bad-soft)}
+.alert.soon{background:var(--warn-soft)}
+.alert ul{margin:6px 0 4px;padding-left:18px}
+.brand{display:flex;gap:12px;align-items:center;padding:0 8px 24px}
+.logo{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,var(--green),var(--blue));display:grid;place-items:center;font-size:22px}
+.brand b{display:block;font-weight:800;font-size:17px;line-height:1.2}
+.brand span{font-size:13px;color:var(--muted)}
+.nav{display:flex;flex-direction:column;gap:4px}
+.nav button{display:flex;align-items:center;gap:12px;border:0;background:none;padding:12px 14px;border-radius:12px;cursor:pointer;font-weight:600;color:var(--muted);text-align:left}
+.nav button:hover{background:var(--green-soft)}
+.nav button.on{background:var(--blue-soft);color:var(--blue-dark);font-weight:800}
+.nav .ic{font-size:18px;width:24px;text-align:center}
+.soon{margin-left:auto;font-size:11px;background:var(--warn-soft);color:var(--warn);padding:2px 8px;border-radius:99px;font-weight:700}
+main{padding:28px clamp(16px,4vw,48px) 48px;max-width:980px;width:100%;margin:0 auto}
+h1{font-size:28px;margin:0 0 4px;font-weight:800}
+.sub{color:var(--muted);margin:0 0 24px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:20px}
+.grid{display:grid;gap:14px}
+.stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:20px}
+.stat{border-radius:16px;padding:16px 18px}
+.stat b{display:block;font-size:30px;font-weight:800;line-height:1.1}
+.stat span{font-size:14px;color:var(--muted)}
+.s1{background:var(--green-soft)}.s2{background:var(--blue-soft)}.s3{background:var(--ok-soft)}.s4{background:var(--warn-soft)}
+.row{display:grid;gap:14px;grid-template-columns:1fr 1fr}
+label{display:block;font-weight:700;font-size:14px;margin-bottom:6px}
+input,select,textarea{width:100%;padding:11px 13px;border:1.5px solid var(--line);border-radius:12px;background:var(--bg)}
+input:focus,select:focus,textarea:focus{border-color:var(--blue);outline:none;box-shadow:0 0 0 3px var(--blue-soft)}
+textarea{min-height:84px;resize:vertical}
+.field{margin-bottom:14px}
+.btn{border:0;background:var(--blue);color:#fff;padding:11px 20px;border-radius:12px;font-weight:700;cursor:pointer}
+.btn:hover{background:var(--blue-dark)}
+.btn.soft{background:var(--green-soft);color:var(--ink)}
+.btn.soft:hover{background:var(--green)}
+.btn.danger{background:none;color:#b3402f;padding:6px 10px}
+.bar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+.bar>*{flex:1 1 150px;width:auto}
+.item{display:grid;grid-template-columns:1fr auto;gap:14px;padding:12px 4px;border-top:1px solid var(--line);align-items:start}
+.grphead+.item{border-top:0}
+.grp{margin-bottom:18px}
+.grphead{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--blue-soft);border-radius:12px;padding:6px 6px 6px 14px;margin-bottom:4px}
+.grphead b{color:var(--blue-dark);margin-right:10px}
+.grphead span{font-size:13px;color:var(--muted);font-weight:600}
+.rowbox{border:1.5px dashed var(--green);border-radius:14px;padding:14px 14px 2px;margin-bottom:14px;background:var(--green-soft)}
+.rowbox input,.rowbox select{background:var(--card)}
+.rowhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.krow{display:flex;gap:10px;align-items:center;padding:12px 4px;border-top:1px solid var(--line);flex-wrap:wrap}
+.krow:first-child{border-top:0}
+.krow .nm{flex:1 1 160px;font-weight:700}
+.krow small{color:var(--muted);font-weight:600}
+.item:first-child{border-top:0}
+.date{background:var(--blue-soft);color:var(--blue-dark);border-radius:12px;padding:6px 10px;text-align:center;font-weight:800;min-width:56px;line-height:1.2}
+.date small{display:block;font-weight:600;font-size:11px}
+.item h3{margin:0 0 2px;font-size:16px;font-weight:700}
+.item p{margin:2px 0 0;color:var(--muted);font-size:14px;white-space:pre-wrap}
+.tag{display:inline-block;font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px;margin-right:6px;background:var(--green-soft)}
+.tag.Selesai{background:var(--ok-soft);color:var(--ok)}
+.tag.Proses{background:var(--blue-soft);color:var(--blue-dark)}
+.tag.Tertunda{background:var(--warn-soft);color:var(--warn)}
+.acts{display:flex;flex-direction:column;gap:2px;align-items:flex-end}
+.link{border:0;background:none;color:var(--blue);font-weight:700;cursor:pointer;padding:6px 10px}
+.empty{text-align:center;color:var(--muted);padding:32px 12px}
+.toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:99px;font-weight:700;opacity:0;pointer-events:none;transition:opacity .2s;z-index:20}
+.toast.show{opacity:1}
+.hide{display:none!important}
+.tip{background:var(--blue-soft);border-radius:14px;padding:14px 16px;font-size:14px;margin-top:16px}
+.dash{grid-template-columns:1fr 1fr;margin-bottom:0}
+.wide{grid-column:1/-1}
+.ct{font-size:17px;margin:0 0 14px;font-weight:800}
+.bars{display:flex;gap:8px;align-items:flex-end;height:190px}
+.bcol{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;min-width:0}
+.bb{width:100%;max-width:40px;background:var(--blue);border-radius:8px 8px 3px 3px}
+.bcol.today .bb{background:var(--ok)}
+.bv{font-weight:800;font-size:13px}
+.bl{font-size:12px;color:var(--muted);text-align:center;line-height:1.3}
+.dn{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.donut{width:130px;height:130px;flex:0 0 auto}
+.legend div{margin:4px 0;font-size:14px}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:4px;margin-right:8px;vertical-align:-1px}
+.hb{display:grid;grid-template-columns:minmax(110px,200px) 1fr auto;gap:12px;align-items:center;margin:10px 0;font-size:14px}
+.hn{font-weight:600}
+.ht{background:var(--blue-soft);border-radius:99px;height:12px;overflow:hidden}
+.hf{background:var(--blue);height:100%;border-radius:99px}
+.scroll{overflow-x:auto}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{background:var(--blue-soft);color:var(--blue-dark);text-align:left;padding:8px 10px;font-weight:800;white-space:nowrap}
+.tbl td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl .n{text-align:center}
+.tag.Tersimpan{background:var(--ok-soft);color:var(--ok)}
+.tag.Diproses{background:var(--blue-soft);color:var(--blue-dark)}
+.tag.Dipinjam{background:var(--warn-soft);color:var(--warn)}
+.fgrid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.kal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.kh{text-align:center;font-size:12px;font-weight:800;color:var(--muted);padding:4px 0}
+.kd{min-height:72px;border:1px solid var(--line);border-radius:12px;background:var(--bg);padding:6px 4px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:3px;align-items:flex-start;color:var(--ink);overflow:hidden;font:inherit}
+.kd:hover{background:var(--green-soft)}
+.kd b{font-size:13px;font-weight:700;padding:0 4px;line-height:1.5}
+.kd.today b{background:var(--blue);color:#fff;border-radius:99px;padding:0 7px}
+.kd.sel{border:2px solid var(--blue);background:var(--blue-soft)}
+.kd.pad{border:0;background:none;cursor:default;min-height:0}
+.kbs{display:flex;flex-wrap:wrap;gap:2px;padding:0 2px}
+.kb{font-style:normal;min-width:16px;padding:0 4px;border-radius:99px;font-size:10px;font-weight:800;color:#fff;line-height:16px;text-align:center}
+.b4{background:var(--ag)}.tag.Ag{background:var(--ag-soft);color:var(--ag)}
+.b1{background:var(--blue)}.b2{background:var(--warn)}.b2.late{background:var(--bad)}.b3{background:var(--ok)}
+.klg{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:13px;color:var(--muted)}
+.klg i{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+.rsum{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:8px;margin:14px 0 6px}
+.rsum div{border:1px solid var(--line);border-radius:10px;padding:8px;text-align:center;font-size:13px;color:var(--muted)}
+.rsum b{display:block;font-size:22px;color:var(--ink)}
+.kop{text-align:center;border-bottom:2px solid var(--ink);padding-bottom:10px;margin-bottom:8px}
+.kop .k1{font-weight:800;font-size:16px}.kop .k2{font-weight:800;font-size:20px;letter-spacing:.5px}.kop .k3{color:var(--muted);font-size:14px}
+.rh{font-size:15px;margin:18px 0 8px}
+.dg td{background:var(--green-soft);font-weight:800}
+.sign{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:30px;text-align:center;font-size:14px}
+.sign .sp{height:64px}
+.rtl{display:flex;gap:8px;align-items:center;font-weight:600;font-size:14px;margin:0}
+.cb{width:auto;padding:0;accent-color:var(--blue)}
+summary{cursor:pointer;font-weight:800}
+@media (max-width:760px){
+  main{padding-top:16px}
+  .row,.dash{grid-template-columns:1fr}
+  h1{font-size:24px}
+  .kd{min-height:58px;padding:4px 2px}
+  .kb{min-width:14px;font-size:9px;padding:0 3px;line-height:14px}
+}
+@page{size:A4;margin:16mm 14mm}
+@media print{
+  .side,.top,.scrim,.noprint,.acts,.toast{display:none!important}
+  .app{display:block} body{background:#fff;color:#000;font-size:11pt}
+  .card{border:0;padding:0;margin:0 0 10px!important;background:#fff} main{padding:0;max-width:none;margin:0}
+  .kop{border-bottom:2px solid #000} .kop .k3,.rsum div,.rsum b,.ct{color:#000}
+  .rsum div{border:1px solid #777;border-radius:0}
+  .tbl{font-size:10pt} .tbl th{background:#e8e8e8!important;color:#000;border:1px solid #777;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tbl td{border:1px solid #777} .tbl tr{page-break-inside:avoid} .tbl thead{display:table-header-group}
+  .dg td{background:#f3f3f3!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tag{background:none!important;color:#000!important;padding:0} .scroll{overflow:visible} .sign{page-break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top noprint"><button class="burger" id="burger" aria-label="Buka menu" aria-expanded="false" aria-controls="menu"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><b id="topTitle">Beranda</b></header>
+  <div class="scrim noprint" id="scrim"></div>
+  <nav class="side noprint" id="menu" aria-label="Menu utama">
+    <div class="brand"><div class="logo">📚</div><div><b>Jurnal Pustakawan</b><span>Catatan kerja &amp; arsip</span></div></div>
+    <div class="nav">
+      <button data-v="beranda" class="on"><span class="ic">🏠</span>Beranda</button>
+      <button data-v="jurnal"><span class="ic">📝</span>Jurnal</button>
+      <button data-v="todo"><span class="ic">✅</span>To-do</button>
+      <button data-v="kalender"><span class="ic">📅</span>Kalender</button>
+      <button data-v="rekap"><span class="ic">📊</span>Rekap</button>
+      <button data-v="arsip"><span class="ic">🗂️</span>Arsip</button>
+      <button data-v="kategori"><span class="ic">🏷️</span>Kategori</button>
+      <button data-v="cadangan"><span class="ic">💾</span>Cadangan</button>
+    </div>
+  </nav>
+
+  <main>
+    <!-- BERANDA -->
+    <section id="v-beranda">
+      <h1 id="sapa">Selamat datang</h1>
+      <p class="sub" id="tgl"></p>
+      <div id="deadline"></div>
+      <div id="arsipNotice"></div>
+      <div class="grid stats" id="stats"></div>
+      <div class="grid dash">
+        <div class="card"><h2 class="ct">7 hari terakhir</h2><div class="bars" id="chHari"></div></div>
+        <div class="card"><h2 class="ct">Status bulan ini</h2><div class="dn" id="chStatus"></div></div>
+        <div class="card wide"><h2 class="ct">Pekerjaan per kategori (bulan ini)</h2><div id="chKat"></div></div>
+        <div class="card wide">
+          <div class="bar noprint" style="margin-bottom:8px;align-items:center"><h2 class="ct" style="flex:2 1 200px;margin:0">Pekerjaan hari ini</h2><button class="btn" id="tambahCepat" style="flex:0 0 auto">Catat pekerjaan</button></div>
+          <div id="listHariIni"></div>
+        </div>
+        <div class="card wide">
+          <div class="bar noprint" style="margin-bottom:8px;align-items:center"><h2 class="ct" style="flex:2 1 200px;margin:0">Agenda 7 hari ke depan</h2><button class="btn soft" data-go="kalender" style="flex:0 0 auto">Buka kalender</button></div>
+          <div id="listAgenda"></div>
+        </div>
+        <div class="card wide"><h2 class="ct">Belum selesai</h2><div id="listBelum"></div></div>
+      </div>
+    </section>
+
+    <!-- TODO -->
+    <section id="v-todo" class="hide">
+      <h1>To-do list</h1>
+      <p class="sub">Pekerjaan yang punya tenggat. Pengingat muncul di Beranda mulai 3 hari sebelum tenggat.</p>
+      <div class="card noprint" style="margin-bottom:20px">
+        <div class="field"><label for="tJudul">Pekerjaan</label><input id="tJudul" list="daftarJudul" maxlength="140" autocomplete="off" placeholder="Contoh: Serahkan laporan stock opname"></div>
+        <div class="row">
+          <div class="field"><label for="tTenggat">Tenggat (opsional)</label><input type="date" id="tTenggat"></div>
+          <div class="field"><label for="tKat">Kategori</label><select id="tKat"></select></div>
+        </div>
+        <div class="field"><label for="tCatatan">Catatan (opsional)</label><input id="tCatatan" placeholder="Keterangan tambahan"></div>
+        <button class="btn" id="tSimpan" type="button">Tambah ke to-do</button>
+        <button class="btn soft hide" id="tBatal" type="button">Batal edit</button>
+      </div>
+      <div class="card">
+        <div class="bar noprint"><select id="tFilter" aria-label="Tampilkan"><option value="belum">Belum selesai</option><option value="selesai">Selesai</option><option value="semua">Semua</option></select></div>
+        <div id="tList"></div>
+      </div>
+    </section>
+
+    <!-- KALENDER -->
+    <section id="v-kalender" class="hide">
+      <h1>Kalender</h1>
+      <p class="sub">Lihat pekerjaan, tenggat to-do, arsip, dan agenda per tanggal.</p>
+      <div class="bar noprint" style="margin-bottom:16px"><button class="btn" data-agadd="sel" style="flex:0 0 auto">+ Agenda baru</button></div>
+      <form id="agForm" class="card noprint hide" style="margin-bottom:20px" onsubmit="return false">
+        <h2 id="agFormJudul" style="margin:0 0 14px;font-size:18px">Agenda baru</h2>
+        <div class="field"><label for="agJudul">Judul agenda</label><input id="agJudul" maxlength="140" placeholder="Contoh: Rapat dewan guru"></div>
+        <div class="row">
+          <div class="field"><label for="agTgl">Tanggal</label><input type="date" id="agTgl"></div>
+          <div class="field"><label for="agAkhir">Sampai tanggal (opsional)</label><input type="date" id="agAkhir"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="agJam">Jam (opsional)</label><input type="time" id="agJam"></div>
+          <div class="field"><label for="agTempat">Tempat (opsional)</label><input id="agTempat" maxlength="100"></div>
+        </div>
+        <div class="field"><label for="agCatatan">Catatan (opsional)</label><input id="agCatatan"></div>
+        <button class="btn" id="agSimpan" type="button">Simpan agenda</button>
+        <button class="btn soft" id="agBatal" type="button">Batal</button>
+      </form>
+      <div class="card" style="margin-bottom:20px">
+        <div class="bar" style="align-items:center;margin-bottom:12px">
+          <button class="btn soft" data-kn="-1" aria-label="Bulan sebelumnya" style="flex:0 0 auto">‹</button>
+          <h2 class="ct" id="kalJudul" style="flex:2 1 120px;margin:0;text-align:center"></h2>
+          <button class="btn soft" data-kn="1" aria-label="Bulan berikutnya" style="flex:0 0 auto">›</button>
+          <button class="btn" data-kn="0" style="flex:0 0 auto">Hari ini</button>
+        </div>
+        <div class="kal" id="kalGrid"></div>
+        <div class="klg"><span><i class="b1"></i>Jurnal pekerjaan</span><span><i class="b2"></i>Tenggat to-do</span><span><i class="b3"></i>Arsip (tanggal dokumen / batas kembali)</span><span><i class="b4"></i>Agenda</span></div>
+      </div>
+      <div class="card" id="kalDetail"></div>
+    </section>
+
+    <!-- REKAP -->
+    <section id="v-rekap" class="hide">
+      <h1>Rekap pekerjaan</h1>
+      <p class="sub">Atur periode dan tanggal yang ingin dilihat atau dicetak.</p>
+      <div class="card noprint" style="margin-bottom:16px">
+        <div class="bar">
+          <select id="rMode" aria-label="Periode"><option value="bulan">Per bulan</option><option value="rentang">Rentang tanggal</option><option value="tahun">Per tahun</option><option value="semua">Semua data</option></select>
+          <input type="month" id="rBulan" aria-label="Bulan">
+          <input type="number" id="rTahun" min="2000" max="2100" class="hide" aria-label="Tahun">
+          <input type="date" id="rDari" class="hide" aria-label="Dari tanggal">
+          <input type="date" id="rSampai" class="hide" aria-label="Sampai tanggal">
+        </div>
+        <div class="bar" style="margin-bottom:0"><button class="btn soft" data-rp="minggu">Minggu ini</button><button class="btn soft" data-rp="bulan">Bulan ini</button><button class="btn soft" data-rp="lalu">Bulan lalu</button></div>
+      </div>
+      <details class="card noprint" style="margin-bottom:16px"><summary>Pilih tanggal yang dicetak <span id="rTglInfo" style="color:var(--muted);font-weight:600"></span></summary>
+        <div class="bar" style="margin:12px 0"><button class="btn soft" id="rAll" style="flex:0 0 auto">Pilih semua</button><button class="btn soft" id="rNone" style="flex:0 0 auto">Kosongkan</button></div>
+        <div class="fgrid" id="rTglList"></div>
+      </details>
+      <details class="card noprint" style="margin-bottom:16px"><summary>Kop dan tanda tangan</summary>
+        <p class="sub" style="margin:8px 0 12px;font-size:14px">Tersimpan di perangkat ini dan tampil di hasil cetak.</p>
+        <div class="fgrid">
+          <div class="field"><label for="sSekolah">Nama sekolah / instansi</label><input id="sSekolah" maxlength="100"></div>
+          <div class="field"><label for="sKota">Kota (untuk tanggal cetak)</label><input id="sKota" maxlength="60"></div>
+          <div class="field"><label for="sNama">Nama pustakawan</label><input id="sNama" maxlength="80"></div>
+          <div class="field"><label for="sJabatan">Jabatan</label><input id="sJabatan" maxlength="60"></div>
+          <div class="field"><label for="sAtasan">Nama atasan (mengetahui)</label><input id="sAtasan" maxlength="80"></div>
+          <div class="field"><label for="sJabAtasan">Jabatan atasan</label><input id="sJabAtasan" maxlength="60"></div>
+        </div>
+      </details>
+      <div class="card noprint" style="margin-bottom:16px"><b>Isi rekap</b>
+        <div class="bar" style="margin:10px 0 14px">
+          <label class="rtl" style="flex:1 1 180px"><input type="checkbox" class="cb" id="rOpt1" checked> Ringkasan per kategori</label>
+          <label class="rtl" style="flex:1 1 180px"><input type="checkbox" class="cb" id="rOpt2" checked> Pekerjaan paling sering</label>
+          <label class="rtl" style="flex:1 1 180px"><input type="checkbox" class="cb" id="rOpt3" checked> Rincian per tanggal</label>
+        </div>
+        <div class="bar" style="margin-bottom:0"><button class="btn" id="rCetak" style="flex:0 0 auto">Cetak / simpan PDF</button><button class="btn soft" id="rCsv" style="flex:0 0 auto">Unduh CSV</button></div>
+      </div>
+      <div id="rIsi"></div>
+    </section>
+
+    <!-- JURNAL -->
+    <section id="v-jurnal" class="hide">
+      <h1>Jurnal harian</h1>
+      <p class="sub">Catat apa yang dikerjakan hari ini.</p>
+      <form id="form" class="card noprint" style="margin-bottom:20px" onsubmit="return false">
+        <h2 id="formJudul" style="margin:0 0 14px;font-size:18px">Catat pekerjaan</h2>
+        <div class="field" style="max-width:260px"><label for="fTgl">Tanggal</label><input type="date" id="fTgl"></div>
+        <div id="rows"></div>
+        <datalist id="daftarJudul"></datalist>
+        <div class="bar" style="margin-bottom:0">
+          <button class="btn soft" id="tambahBaris" type="button" style="flex:1 1 200px">+ Tambah pekerjaan lain</button>
+          <button class="btn" id="simpan" type="button" style="flex:1 1 200px">Simpan semua</button>
+          <button class="btn soft hide" id="batal" type="button" style="flex:1 1 120px">Batal edit</button>
+        </div>
+      </form>
+
+      <div class="card">
+        <div class="bar noprint">
+          <input type="month" id="qBulan" aria-label="Bulan">
+          <select id="qKat" aria-label="Filter kategori"><option value="">Semua kategori</option></select>
+          <select id="qStatus" aria-label="Filter status"><option value="">Semua status</option><option>Selesai</option><option>Proses</option><option>Tertunda</option></select>
+          <input type="search" id="qCari" placeholder="Cari pekerjaan…" aria-label="Cari">
+        </div>
+        <div class="bar noprint" style="justify-content:space-between;align-items:center">
+          <span id="jumlah" style="flex:1 1 auto;color:var(--muted);font-weight:700"></span>
+          <button class="btn soft" id="cetak" style="flex:0 0 auto">Cetak rekap</button>
+        </div>
+        <h2 class="hide" id="judulCetak" style="display:none"></h2>
+        <div id="list"></div>
+      </div>
+    </section>
+
+    <!-- ARSIP -->
+    <section id="v-arsip" class="hide">
+      <h1>Register arsip</h1>
+      <p class="sub">Dokumen arsip internal: letak simpan, status, dan peminjaman.</p>
+      <div class="grid stats" id="aStats"></div>
+      <div class="bar noprint" style="margin-bottom:16px"><button class="btn" id="aBaru" style="flex:0 0 auto">+ Arsip baru</button></div>
+      <details class="card noprint" style="margin-bottom:16px"><summary>Pengaturan nomor arsip <span id="nContoh" style="color:var(--muted);font-weight:600;font-size:14px"></span></summary>
+        <div class="field" style="margin-top:12px"><label for="nPreset">Pilih format</label><select id="nPreset">
+          <option value="{no}/{jenis}/{blr}/{thn}">001/SM/XI/2026 (nomor / jenis / bulan romawi / tahun)</option>
+          <option value="{no}/{unit}/{jenis}/{blr}/{thn}">001/PERPUS/SM/XI/2026 (dengan kode unit)</option>
+          <option value="{no}/{jenis}/{lok}/{blr}/{thn}">001/SM/LAR2/XI/2026 (dengan kode lokasi)</option>
+          <option value="{jenis}-{thn}{bln}-{no}">SM-202611-001</option>
+          <option value="ARS-{thn}-{no}">ARS-2026-001 (format lama)</option>
+          <option value="">Format sendiri (ketik di bawah)</option></select></div>
+        <div class="field"><label for="nFmt">Format nomor</label><input id="nFmt" maxlength="80"><small style="color:var(--muted)">Kode yang bisa dipakai: {no} nomor urut · {jenis} kode jenis · {blr} bulan romawi · {bln} bulan angka · {thn} tahun · {lok} kode lokasi · {unit} kode unit</small></div>
+        <div class="fgrid">
+          <div class="field"><label for="nScope">Nomor urut kembali ke 001 setiap</label><select id="nScope"><option value="thn">Tahun</option><option value="bln">Bulan</option><option value="jenis">Jenis arsip (per tahun)</option><option value="semua">Tidak pernah (berlanjut)</option></select></div>
+          <div class="field"><label for="nUnit">Kode unit (opsional)</label><input id="nUnit" maxlength="12" placeholder="Contoh: PERPUS"></div>
+        </div>
+        <small style="color:var(--muted)">Kode jenis dan kode lokasi bisa diubah di menu Kategori. Nomor arsip yang sudah tersimpan tidak ikut berubah.</small>
+      </details>
+      <form id="aForm" class="card noprint hide" style="margin-bottom:20px" onsubmit="return false">
+        <h2 id="aFormJudul" style="margin:0 0 14px;font-size:18px">Arsip baru</h2>
+        <div class="row">
+          <div class="field"><label for="aNo">Nomor arsip</label><div style="display:flex;gap:8px"><input id="aNo" maxlength="80"><button class="btn soft" type="button" id="aNoAuto" style="flex:0 0 auto;padding:11px 14px" title="Buat ulang nomor otomatis" aria-label="Buat ulang nomor otomatis">↻</button></div><small style="color:var(--muted)">Terisi otomatis sesuai format di Pengaturan nomor arsip. Boleh diubah manual.</small></div>
+          <div class="field"><label for="aTgl">Tanggal dokumen</label><input type="date" id="aTgl"></div>
+        </div>
+        <div class="field"><label for="aPerihal">Perihal / judul dokumen</label><input id="aPerihal" maxlength="200" placeholder="Contoh: Surat undangan rapat dinas"></div>
+        <div class="row">
+          <div class="field"><label for="aJenis">Jenis</label><div style="display:flex;gap:8px"><select id="aJenis"></select><button class="btn soft" type="button" id="aJenisBaru" style="flex:0 0 auto;padding:11px 16px" aria-label="Tambah jenis baru">+</button></div></div>
+          <div class="field"><label for="aAsal">Asal / pengirim / tujuan</label><input id="aAsal" maxlength="120"></div>
+        </div>
+        <div class="row">
+          <div class="field"><label for="aBentuk">Bentuk arsip</label><select id="aBentuk"><option>Digital</option><option>Fisik</option><option>Digital + fisik</option></select></div>
+          <div class="field"><label for="aStatus">Status</label><select id="aStatus"></select></div>
+        </div>
+        <div class="field"><label for="aLok">Lokasi simpan (lemari/rak atau folder)</label><input id="aLok" list="aLokList" maxlength="120" autocomplete="off" placeholder="Contoh: Lemari A, Rak 2 / Folder Arsip 2026 > November"><datalist id="aLokList"></datalist></div>
+        <div class="fgrid" id="aDigital">
+          <div class="field"><label for="aFile">Nama file (opsional)</label><input id="aFile" maxlength="160"></div>
+          <div class="field"><label for="aUnggah">Unggah ke Drive</label><select id="aUnggah"><option value="belum">Belum diunggah</option><option value="sudah">Sudah diunggah</option></select></div>
+          <div class="field" id="aTglUpW"><label for="aTglUp">Tanggal unggah</label><input type="date" id="aTglUp"></div>
+          <div class="field" style="grid-column:1/-1"><label for="aDrive">Tautan Drive (opsional)</label><input id="aDrive" type="url" maxlength="300" placeholder="https://drive.google.com/…"></div>
+        </div>
+        <div class="fgrid hide" id="aPinjam">
+          <div class="field"><label for="aPOleh">Dipinjam oleh</label><input id="aPOleh" maxlength="80"></div>
+          <div class="field"><label for="aPTgl">Tanggal pinjam</label><input type="date" id="aPTgl"></div>
+          <div class="field"><label for="aPBatas">Batas kembali</label><input type="date" id="aPBatas"></div>
+        </div>
+        <div class="field"><label for="aCatatan">Catatan (opsional)</label><input id="aCatatan"></div>
+        <button class="btn" id="aSimpan" type="button">Simpan arsip</button>
+        <button class="btn soft" id="aBatal" type="button">Batal</button>
+      </form>
+      <div class="card">
+        <div class="bar noprint">
+          <input type="search" id="aCari" placeholder="Cari nomor, perihal, asal, lokasi…" aria-label="Cari arsip" style="flex:2 1 220px">
+          <select id="aJenisF" aria-label="Filter jenis"></select>
+          <select id="aStatusF" aria-label="Filter status"><option value="">Semua status</option><option>Diterima</option><option>Diproses</option><option>Tersimpan</option><option>Dipinjam</option></select>
+          <select id="aUpF" aria-label="Filter unggah"><option value="">Semua (unggah)</option><option value="belum">Belum diunggah</option><option value="sudah">Sudah diunggah</option></select>
+        </div>
+        <div class="bar noprint" style="justify-content:space-between;align-items:center">
+          <span id="aJumlah" style="flex:1 1 auto;color:var(--muted);font-weight:700"></span>
+          <button class="btn soft hide" id="aTandai" style="flex:0 0 auto">Tandai semua terunggah</button>
+          <button class="btn soft" id="aCsv" style="flex:0 0 auto">Unduh CSV</button>
+          <button class="btn soft" id="aCetak" style="flex:0 0 auto">Cetak daftar</button>
+        </div>
+        <div id="aList"></div>
+      </div>
+    </section>
+
+    <!-- KATEGORI -->
+    <section id="v-kategori" class="hide">
+      <h1>Kategori pekerjaan</h1>
+      <p class="sub">Tambah atau rapikan jenis pekerjaan. Pilihan di form Jurnal mengikuti daftar ini.</p>
+      <div class="card" style="margin-bottom:20px">
+        <label for="kBaru">Kategori baru</label>
+        <div class="bar" style="margin-bottom:0">
+          <input id="kBaru" placeholder="Contoh: Pameran buku" maxlength="40" style="flex:3 1 220px">
+          <button class="btn" id="kTambah" style="flex:0 0 auto">Tambah kategori</button>
+        </div>
+      </div>
+      <div class="card"><div id="kList"></div></div>
+      <h2 class="ct" style="margin:28px 0 4px;font-size:22px">Jenis arsip</h2>
+      <p class="sub" style="margin-bottom:14px">Pilihan jenis di menu Arsip.</p>
+      <div class="card" style="margin-bottom:20px">
+        <label for="jBaru">Jenis arsip baru</label>
+        <div class="bar" style="margin-bottom:0">
+          <input id="jBaru" placeholder="Contoh: Daftar hadir" maxlength="40" style="flex:3 1 220px">
+          <button class="btn" id="jTambah" style="flex:0 0 auto">Tambah jenis</button>
+        </div>
+      </div>
+      <div class="card"><div id="jList"></div></div>
+      <h2 class="ct" style="margin:28px 0 4px;font-size:22px">Kode lokasi arsip</h2>
+      <p class="sub" style="margin-bottom:14px">Dipakai bila format nomor memuat {lok}. Daftar muncul otomatis dari lokasi yang pernah diisi di menu Arsip.</p>
+      <div class="card"><div id="lList"></div></div>
+    </section>
+
+    <!-- CADANGAN -->
+    <section id="v-cadangan" class="hide">
+      <h1>Cadangan data</h1>
+      <p class="sub">Data tersimpan di browser perangkat ini. Unduh cadangan secara berkala.</p>
+      <div class="card">
+        <div class="bar" style="margin-bottom:0">
+          <button class="btn" id="eksJson">Unduh cadangan (JSON)</button>
+          <button class="btn soft" id="eksCsv">Unduh tabel (CSV)</button>
+          <button class="btn soft" id="impBtn">Pulihkan dari file</button>
+          <input type="file" id="impFile" accept=".json,application/json" class="hide">
+        </div>
+        <div class="tip">Jangan upload file cadangan ke GitHub jika repositori Anda publik. Simpan di Google Drive atau flashdisk.</div>
+        <div class="bar" style="margin-top:16px;margin-bottom:0;align-items:center">
+          <span id="infoData" style="color:var(--muted);flex:2 1 200px"></span>
+          <button class="btn danger" id="hapusSemua" style="flex:0 0 auto">Hapus semua data</button>
+        </div>
+      </div>
+    <div class="card" style="margin-top:20px">
+        <h2 class="ct">Pasang di HP / komputer</h2>
+        <p style="color:var(--muted);margin:0 0 12px">Aplikasi bisa dipasang di layar utama dan tetap terbuka tanpa internet.</p>
+        <button class="btn hide" id="pwaBtn" type="button">Pasang aplikasi</button>
+        <div class="tip" style="margin-top:0">Android (Chrome): menu ⋮ → <b>Instal aplikasi</b> atau <b>Tambahkan ke layar utama</b>. Komputer (Chrome/Edge): ikon pasang di kolom alamat. iPhone (Safari): tombol Bagikan → <b>Tambah ke Layar Utama</b>.</div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+(function(){
+  var KEY='jurnal_pustakawan_v1';
+  var KKEY='jurnal_pustakawan_kat_v1';
+  var KAT_DEF=['Sirkulasi','Inventaris / Stock Opname','Input Data SLiMS','Pengolahan Bahan Pustaka','Arsip','Administrasi / Dapodik','Layanan Pemustaka','Lain-lain'];
+  var VIEWS=['beranda','jurnal','todo','kalender','rekap','arsip','kategori','cadangan'];
+  var kats=[],todos=[],TKEY='jurnal_pustakawan_todo_v1',arsip=[],ajenis=[],AKEY='jurnal_pustakawan_arsip_v1',agenda=[],GKEY='jurnal_pustakawan_agenda_v1',kodeJ={},kodeL={};
+  var AJ_DEF=['Surat masuk','Surat keluar','Notulen rapat','Laporan','SK / Surat keputusan','Dokumen lain'];
+  var TITLES={beranda:'Beranda',jurnal:'Jurnal',todo:'To-do',kalender:'Kalender',rekap:'Rekap',arsip:'Arsip',kategori:'Kategori',cadangan:'Cadangan'};
+  var BULAN=['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  var HARI=['Minggu','Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'];
+  var data=[];
+  var $=function(id){return document.getElementById(id)};
+
+  function load(){
+    try{data=JSON.parse(localStorage.getItem(KEY)||'[]')||[]}catch(e){data=[]}
+    try{kats=JSON.parse(localStorage.getItem(KKEY)||'null')}catch(e){kats=null}
+    try{todos=JSON.parse(localStorage.getItem(TKEY)||'[]')}catch(e){todos=[]}
+    if(!Array.isArray(todos))todos=[];
+    try{agenda=JSON.parse(localStorage.getItem(GKEY)||'[]')}catch(e){agenda=[]}
+    if(!Array.isArray(agenda))agenda=[];
+    try{var ao=JSON.parse(localStorage.getItem(AKEY)||'null');arsip=ao&&ao.items||[];ajenis=ao&&ao.jenis||[];kodeJ=ao&&ao.kodeJenis||{};kodeL=ao&&ao.kodeLok||{}}catch(e){arsip=[];ajenis=[]}
+    if(!Array.isArray(arsip))arsip=[];if(!Array.isArray(ajenis)||!ajenis.length)ajenis=AJ_DEF.slice();
+    arsip.forEach(function(a){if(a.jenis&&ajenis.indexOf(a.jenis)<0)ajenis.push(a.jenis)});
+    if(!Array.isArray(kats)||!kats.length)kats=KAT_DEF.slice();
+    data.forEach(function(e){if(e.kat&&kats.indexOf(e.kat)<0)kats.push(e.kat)});
+  }
+  function save(){try{localStorage.setItem(KEY,JSON.stringify(data));localStorage.setItem(KKEY,JSON.stringify(kats));localStorage.setItem(TKEY,JSON.stringify(todos));localStorage.setItem(AKEY,JSON.stringify({items:arsip,jenis:ajenis,kodeJenis:kodeJ,kodeLok:kodeL}));localStorage.setItem(GKEY,JSON.stringify(agenda))}catch(e){toast('Gagal menyimpan. Penyimpanan browser penuh atau dinonaktifkan.')}}
+  function pad(n){return String(n).padStart(2,'0')}
+  function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+  function parse(s){var p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2])}
+  function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]})}
+  function toast(m){var t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(function(){t.classList.remove('show')},2400)}
+  function fmtTgl(s){var d=parse(s);return HARI[d.getDay()]+', '+d.getDate()+' '+BULAN[d.getMonth()]+' '+d.getFullYear()}
+
+  /* menu */
+  function show(v){
+    VIEWS.forEach(function(k){$('v-'+k).classList.toggle('hide',k!==v)});
+    document.querySelectorAll('.nav button').forEach(function(b){b.classList.toggle('on',b.dataset.v===v)});
+    try{if(location.hash!=='#'+v)history.replaceState(null,'','#'+v)}catch(e){}
+    $('topTitle').textContent=TITLES[v]||'';menu(false);window.scrollTo(0,0);render();
+  }
+  document.querySelectorAll('.nav button').forEach(function(b){b.onclick=function(){show(b.dataset.v)}});
+
+  /* item html */
+  function itemHtml(e,withActs){
+    return '<div class="item"><div><h3>'+esc(e.judul)+'</h3><div><span class="tag">'+esc(e.kat)+'</span><span class="tag '+esc(e.status)+'">'+esc(e.status)+'</span></div>'+
+      (e.catatan?'<p>'+esc(e.catatan)+'</p>':'')+'</div>'+
+      (withActs?'<div class="acts"><button class="link" data-edit="'+e.id+'">Ubah</button><button class="link" data-done="'+e.id+'">'+(e.status==='Selesai'?'Buka lagi':'Tandai selesai')+'</button><button class="link" style="color:#b3402f" data-del="'+e.id+'">Hapus</button></div>':'<div></div>')+'</div>';
+  }
+  function groupHtml(list){
+    var out='',cur='';
+    list.forEach(function(e){
+      if(e.tgl!==cur){
+        if(cur)out+='</div>';
+        cur=e.tgl;
+        var n=list.filter(function(x){return x.tgl===cur}).length;
+        out+='<div class="grp"><div class="grphead"><div><b>'+fmtTgl(cur)+'</b><span>'+n+' pekerjaan</span></div><button class="link noprint" data-addday="'+cur+'">+ Tambah</button></div>';
+      }
+      out+=itemHtml(e,true);
+    });
+    return out+(cur?'</div>':'');
+  }
+
+  function donut(vals){
+    var tot=vals.reduce(function(a,v){return a+v.n},0),off=25,sg='';
+    if(tot)vals.forEach(function(v){if(!v.n)return;var p=v.n/tot*100;sg+='<circle cx="21" cy="21" r="15.915" fill="none" stroke-width="6" style="stroke:'+v.c+'" stroke-dasharray="'+p+' '+(100-p)+'" stroke-dashoffset="'+off+'"/>';off-=p});
+    return '<svg viewBox="0 0 42 42" class="donut" role="img" aria-label="Komposisi status"><circle cx="21" cy="21" r="15.915" fill="none" stroke-width="6" style="stroke:var(--line)"/>'+sg+'<text x="21" y="23" text-anchor="middle" font-size="8" font-weight="800" style="fill:var(--ink)">'+tot+'</text></svg>'+
+      '<div class="legend">'+vals.map(function(v){return '<div><i style="background:'+v.c+'"></i>'+v.l+' <b>'+v.n+'</b></div>'}).join('')+(tot?'':'<div style="color:var(--muted)">Belum ada data</div>')+'</div>';
+  }
+  function renderBeranda(){
+    var now=new Date(),today=iso(now),ym=today.slice(0,7),jam=now.getHours();
+    $('sapa').textContent=(jam<11?'Selamat pagi':jam<15?'Selamat siang':jam<19?'Selamat sore':'Selamat malam')+' 👋';
+    $('tgl').textContent=fmtTgl(today);
+    var bln=data.filter(function(e){return e.tgl.slice(0,7)===ym});
+    var hari=data.filter(function(e){return e.tgl===today});
+    function c(a,s){return a.filter(function(e){return e.status===s}).length}
+    $('stats').innerHTML=
+      '<div class="stat s1"><b>'+hari.length+'</b><span>Pekerjaan hari ini</span></div>'+
+      '<div class="stat s2"><b>'+bln.length+'</b><span>Total bulan ini</span></div>'+
+      '<div class="stat s3"><b>'+c(bln,'Selesai')+'</b><span>Selesai bulan ini</span></div>'+
+      '<div class="stat s4"><b>'+(c(data,'Proses')+c(data,'Tertunda'))+'</b><span>Belum selesai (semua)</span></div>';
+    var days=[],mx=1;
+    for(var i=6;i>=0;i--){
+      var d=new Date(now.getFullYear(),now.getMonth(),now.getDate()-i),k=iso(d);
+      var n=data.filter(function(e){return e.tgl===k}).length;
+      days.push({k:k,n:n,l:HARI[d.getDay()].slice(0,3),d:d.getDate()});if(n>mx)mx=n;
+    }
+    $('chHari').innerHTML=days.map(function(x){return '<div class="bcol'+(x.k===today?' today':'')+'"><span class="bv">'+x.n+'</span><div class="bb" style="height:'+Math.max(4,Math.round(x.n/mx*110))+'px"></div><span class="bl">'+x.l+'<br>'+x.d+'</span></div>'}).join('');
+    $('chStatus').innerHTML=donut([{n:c(bln,'Selesai'),c:'var(--ok)',l:'Selesai'},{n:c(bln,'Proses'),c:'var(--blue)',l:'Proses'},{n:c(bln,'Tertunda'),c:'var(--warn)',l:'Tertunda'}]);
+    var ck={};bln.forEach(function(e){ck[e.kat]=(ck[e.kat]||0)+1});
+    var ks=Object.keys(ck).sort(function(a,b){return ck[b]-ck[a]}),m2=ks.length?ck[ks[0]]:1;
+    $('chKat').innerHTML=ks.length?ks.map(function(k){return '<div class="hb"><span class="hn">'+esc(k)+'</span><div class="ht"><div class="hf" style="width:'+Math.round(ck[k]/m2*100)+'%"></div></div><b>'+ck[k]+'</b></div>'}).join(''):'<div class="empty">Belum ada pekerjaan bulan ini.</div>';
+    $('listHariIni').innerHTML=hari.length?hari.map(function(e){return itemHtml(e,true)}).join(''):'<div class="empty">Belum ada catatan hari ini.<br>Mulai dengan menekan “Catat pekerjaan”.</div>';
+    var bs=data.filter(function(e){return e.status!=='Selesai'}).sort(function(a,b){return a.tgl<b.tgl?1:a.tgl>b.tgl?-1:b.id-a.id}).slice(0,8);
+    $('listBelum').innerHTML=bs.length?groupHtml(bs):'<div class="empty">Semua pekerjaan sudah selesai. Bagus!</div>';
+  }
+
+  function filtered(){
+    var b=$('qBulan').value,k=$('qKat').value,s=$('qStatus').value,q=$('qCari').value.trim().toLowerCase();
+    return data.filter(function(e){
+      return (!b||e.tgl.slice(0,7)===b)&&(!k||e.kat===k)&&(!s||e.status===s)&&(!q||(e.judul+' '+e.catatan).toLowerCase().indexOf(q)>-1);
+    }).sort(function(a,b){return a.tgl<b.tgl?1:a.tgl>b.tgl?-1:b.id-a.id});
+  }
+  function renderJurnal(){
+    var l=filtered();
+    $('jumlah').textContent=l.length+' catatan';
+    $('list').innerHTML=l.length?groupHtml(l):'<div class="empty">Tidak ada catatan yang cocok dengan filter.</div>';
+  }
+  function renderCadangan(){
+    $('infoData').textContent=data.length+' catatan jurnal, '+todos.length+' to-do, dan '+arsip.length+' arsip tersimpan di perangkat ini.';
+  }
+  function render(){renderBeranda();renderJurnal();renderCadangan();renderKat();renderJenis();renderLok();renderRekap();renderTodo();renderArsip();nPreview();renderKal();renderAgBeranda();refreshLists()}
+
+  /* form */
+  var rows=[],editing=0,STAT=['Selesai','Proses','Tertunda'];
+  function optHtml(sel){var l=kats.slice();if(sel&&l.indexOf(sel)<0)l.push(sel);return l.map(function(k){return '<option'+(k===sel?' selected':'')+'>'+esc(k)+'</option>'}).join('')}
+  function newRow(p){p=p||{};return{kat:p.kat||kats[0]||'',judul:p.judul||'',status:p.status||'Selesai',catatan:p.catatan||''}}
+  function rowHtml(r,i){
+    return '<div class="rowbox"><div class="rowhead"><b>'+(editing?'Ubah pekerjaan':'Pekerjaan '+(i+1))+'</b>'+(rows.length>1?'<button type="button" class="link" data-rm="'+i+'">Hapus baris</button>':'')+'</div>'+
+      '<div class="row"><div class="field"><label>Kategori</label><select data-f="kat">'+optHtml(r.kat)+'</select></div>'+
+      '<div class="field"><label>Status</label><select data-f="status">'+STAT.map(function(x){return '<option'+(x===r.status?' selected':'')+'>'+x+'</option>'}).join('')+'</select></div></div>'+
+      '<div class="field"><label>Pekerjaan</label><input data-f="judul" list="daftarJudul" autocomplete="off" maxlength="140" placeholder="Ketik, atau pilih dari pekerjaan sebelumnya" value="'+esc(r.judul)+'"></div>'+
+      '<div class="field"><label>Catatan (opsional)</label><input data-f="catatan" placeholder="Keterangan tambahan" value="'+esc(r.catatan)+'"></div></div>';
+  }
+  function collect(){
+    var bx=document.querySelectorAll('#rows .rowbox');if(bx.length!==rows.length)return;
+    bx.forEach(function(b,i){rows[i]={kat:b.querySelector('[data-f=kat]').value,status:b.querySelector('[data-f=status]').value,judul:b.querySelector('[data-f=judul]').value,catatan:b.querySelector('[data-f=catatan]').value}});
+  }
+  function renderRows(){
+    $('rows').innerHTML=rows.map(rowHtml).join('');
+    $('tambahBaris').classList.toggle('hide',!!editing);
+    $('batal').classList.toggle('hide',!editing);
+    $('formJudul').textContent=editing?'Ubah catatan':'Catat pekerjaan';
+    $('simpan').textContent=editing?'Simpan perubahan':'Simpan semua';
+  }
+  function focusJudul(i){var el=document.querySelectorAll('#rows [data-f=judul]');if(el.length)el[i==null?el.length-1:i].focus()}
+  function resetForm(tgl){editing=0;rows=[newRow()];$('fTgl').value=tgl||iso(new Date());renderRows()}
+  function canon(j){
+    j=j.replace(/\s+/g,' ').trim();var lj=j.toLowerCase();
+    for(var i=0;i<data.length;i++){if(data[i].judul.toLowerCase()===lj)return data[i].judul}
+    return j;
+  }
+  function refreshLists(){
+    var cnt={};data.forEach(function(e){cnt[e.judul]=(cnt[e.judul]||0)+1});
+    $('daftarJudul').innerHTML=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a]||a.localeCompare(b)}).slice(0,300).map(function(j){return '<option value="'+esc(j)+'">'}).join('');
+    var cur=$('qKat').value;
+    $('qKat').innerHTML='<option value="">Semua kategori</option>'+optHtml('');
+    $('qKat').value=cur;
+    if(rows.length){collect();renderRows()}
+  }
+  function renderKat(){
+    $('kList').innerHTML=kats.map(function(k,i){
+      var n=data.filter(function(e){return e.kat===k}).length;
+      return '<div class="krow"><span class="nm">'+esc(k)+'</span><small>'+n+' catatan</small><button class="link" data-kren="'+i+'">Ubah nama</button><button class="link" style="color:#b3402f" data-kdel="'+i+'">Hapus</button></div>';
+    }).join('');
+  }
+
+  $('tambahBaris').onclick=function(){collect();rows.push(newRow({kat:rows.length?rows[rows.length-1].kat:''}));renderRows();focusJudul()};
+  $('simpan').onclick=function(){
+    collect();
+    var tgl=$('fTgl').value;
+    if(!tgl){toast('Pilih tanggal');return}
+    var filled=rows.filter(function(r){return r.judul.trim()});
+    if(!filled.length){toast('Isi dulu uraian pekerjaannya');focusJudul(0);return}
+    if(editing){
+      var r=filled[0];
+      data=data.map(function(e){return e.id===editing?{id:e.id,tgl:tgl,kat:r.kat,judul:canon(r.judul),status:r.status,catatan:r.catatan.trim()}:e});
+      toast('Catatan diperbarui');save();resetForm();render();
+    }else{
+      filled.forEach(function(r,k){data.push({id:Date.now()+k,tgl:tgl,kat:r.kat,judul:canon(r.judul),status:r.status,catatan:r.catatan.trim()})});
+      toast(filled.length+' pekerjaan disimpan');save();resetForm(tgl);render();
+    }
+  };
+  $('batal').onclick=function(){resetForm()};
+  $('tambahCepat').onclick=function(){show('jurnal');resetForm();focusJudul(0)};
+  $('rows').addEventListener('input',function(ev){
+    var t=ev.target;if(t.dataset.f!=='judul')return;
+    if(ev.inputType&&ev.inputType!=='insertReplacementText')return;
+    var lj=t.value.trim().toLowerCase();
+    for(var i=data.length-1;i>=0;i--){
+      if(data[i].judul.toLowerCase()===lj){t.closest('.rowbox').querySelector('[data-f=kat]').value=data[i].kat;break}
+    }
+  });
+
+  function tambahKat(){
+    var nm=$('kBaru').value.replace(/\s+/g,' ').trim();
+    if(!nm){toast('Tulis nama kategorinya');return}
+    if(kats.some(function(k){return k.toLowerCase()===nm.toLowerCase()})){toast('Kategori itu sudah ada');return}
+    kats.push(nm);save();$('kBaru').value='';render();toast('Kategori ditambahkan');
+  }
+  $('kTambah').onclick=tambahKat;
+  $('kBaru').addEventListener('keydown',function(ev){if(ev.key==='Enter'){ev.preventDefault();tambahKat()}});
+
+  document.addEventListener('click',function(ev){
+    var t=ev.target;if(!t.dataset)return;
+    var d=t.dataset;
+    if(d.edit){
+      var e=data.filter(function(x){return x.id===+d.edit})[0];if(!e)return;
+      show('jurnal');
+      editing=e.id;rows=[newRow(e)];$('fTgl').value=e.tgl;renderRows();focusJudul(0);
+    }else if(d.addday){
+      show('jurnal');resetForm(d.addday);focusJudul(0);
+    }else if(d.rm){
+      collect();rows.splice(+d.rm,1);renderRows();
+    }else if(d.done){
+      data=data.map(function(x){if(x.id===+d.done)x.status=x.status==='Selesai'?'Proses':'Selesai';return x});
+      save();render();
+    }else if(d.del){
+      if(confirm('Hapus catatan ini?')){data=data.filter(function(x){return x.id!==+d.del});save();render();toast('Catatan dihapus')}
+    }else if(d.kren){
+      var i=+d.kren,old=kats[i];
+      var nm=prompt('Nama baru untuk kategori ini:',old);if(nm===null)return;
+      nm=nm.replace(/\s+/g,' ').trim();if(!nm||nm===old)return;
+      var ex=-1;kats.forEach(function(k,x){if(x!==i&&k.toLowerCase()===nm.toLowerCase())ex=x});
+      if(ex>-1){
+        if(!confirm('Kategori "'+kats[ex]+'" sudah ada. Gabungkan semua catatan ke kategori itu?'))return;
+        nm=kats[ex];kats.splice(i,1);
+      }else kats[i]=nm;
+      data.forEach(function(x){if(x.kat===old)x.kat=nm});
+      save();render();toast('Kategori diperbarui');
+    }else if(d.kdel){
+      var k=kats[+d.kdel],n=data.filter(function(x){return x.kat===k}).length;
+      if(n){toast('Masih dipakai di '+n+' catatan. Ubah nama atau gabungkan dulu.');return}
+      if(kats.length<=1){toast('Sisakan minimal satu kategori');return}
+      if(confirm('Hapus kategori "'+k+'"?')){kats.splice(+d.kdel,1);save();render();toast('Kategori dihapus')}
+    }
+  });
+
+  ['qBulan','qKat','qStatus','qCari'].forEach(function(id){$(id).oninput=renderJurnal});
+  $('cetak').onclick=function(){
+    var b=$('qBulan').value,h=$('judulCetak');
+    h.textContent='Rekap pekerjaan'+(b?' – '+BULAN[+b.slice(5)-1]+' '+b.slice(0,4):'');
+    h.style.display='block';window.print();h.style.display='none';
+  };
+
+  /* cadangan */
+  function unduh(nama,isi,tipe){
+    var a=document.createElement('a');a.href=URL.createObjectURL(new Blob([isi],{type:tipe}));a.download=nama;
+    document.body.appendChild(a);a.click();a.remove();setTimeout(function(){URL.revokeObjectURL(a.href)},1000);
+  }
+  $('eksJson').onclick=function(){unduh('jurnal-cadangan-'+iso(new Date())+'.json',JSON.stringify({app:'jurnal-pustakawan',versi:3,data:data,kategori:kats,todo:todos,arsip:arsip,jenisArsip:ajenis,pengaturan:cfg,agenda:agenda,kodeJenis:kodeJ,kodeLok:kodeL},null,2),'application/json');toast('Cadangan diunduh')};
+  $('eksCsv').onclick=function(){
+    var rows=[['Tanggal','Kategori','Pekerjaan','Status','Catatan']].concat(data.slice().sort(function(a,b){return a.tgl<b.tgl?-1:1}).map(function(e){return [e.tgl,e.kat,e.judul,e.status,e.catatan||'']}));
+    var csv='\ufeff'+rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
+    unduh('jurnal-'+iso(new Date())+'.csv',csv,'text/csv');toast('Tabel diunduh');
+  };
+  $('impBtn').onclick=function(){$('impFile').click()};
+  $('impFile').onchange=function(){
+    var f=this.files[0];if(!f)return;var r=new FileReader();
+    r.onload=function(){
+      try{
+        var j=JSON.parse(r.result),arr=Array.isArray(j)?j:j.data;
+        if(!Array.isArray(arr))throw 0;
+        var ids={};data.forEach(function(e){ids[e.id]=1});var n=0;
+        arr.forEach(function(e){if(e&&e.tgl&&e.judul&&!ids[e.id]){data.push(e);n++}});
+        if(j.kodeJenis&&typeof j.kodeJenis==='object')Object.keys(j.kodeJenis).forEach(function(k){if(!kodeJ[k])kodeJ[k]=j.kodeJenis[k]});if(j.kodeLok&&typeof j.kodeLok==='object')Object.keys(j.kodeLok).forEach(function(k){if(!kodeL[k])kodeL[k]=j.kodeLok[k]});if(Array.isArray(j.agenda)){var gid={};agenda.forEach(function(x){gid[x.id]=1});j.agenda.forEach(function(x){if(x&&x.judul&&x.tgl&&!gid[x.id])agenda.push(x)})}if(j.pengaturan&&typeof j.pengaturan==='object'){cfg=Object.assign(cfg,j.pengaturan);saveCfg();cfgFields()}if(Array.isArray(j.arsip)){var aid={};arsip.forEach(function(a){aid[a.id]=1});j.arsip.forEach(function(a){if(a&&a.perihal&&!aid[a.id])arsip.push(a)})}if(Array.isArray(j.jenisArsip))j.jenisArsip.forEach(function(k){if(k&&ajenis.indexOf(k)<0)ajenis.push(k)});arsip.forEach(function(a){if(a.jenis&&ajenis.indexOf(a.jenis)<0)ajenis.push(a.jenis)});if(Array.isArray(j.todo)){var tid={};todos.forEach(function(t){tid[t.id]=1});j.todo.forEach(function(t){if(t&&t.judul&&!tid[t.id])todos.push(t)})}if(Array.isArray(j.kategori))j.kategori.forEach(function(k){if(k&&kats.indexOf(k)<0)kats.push(k)});data.forEach(function(e){if(e.kat&&kats.indexOf(e.kat)<0)kats.push(e.kat)});save();render();toast(n+' catatan dipulihkan');
+      }catch(x){toast('File tidak dikenali. Pilih file cadangan JSON dari aplikasi ini.')}
+    };
+    r.readAsText(f);this.value='';
+  };
+  $('hapusSemua').onclick=function(){
+    if(confirm('Hapus SEMUA catatan? Pastikan sudah mengunduh cadangan.')&&confirm('Yakin? Tindakan ini tidak bisa dibatalkan.')){data=[];todos=[];arsip=[];agenda=[];save();render();toast('Semua data dihapus')}
+  };
+
+  /* rekap */
+  var rExcl={},SKEY='jurnal_pustakawan_set_v1',cfg={sekolah:'',kota:'',nama:'',jabatan:'Pustakawan',atasan:'',jabAtasan:'Kepala Sekolah',fmtNo:'{no}/{jenis}/{blr}/{thn}',noScope:'thn',kodeUnit:''};
+  var CF={sSekolah:'sekolah',sKota:'kota',sNama:'nama',sJabatan:'jabatan',sAtasan:'atasan',sJabAtasan:'jabAtasan'};
+  function loadCfg(){try{var c=JSON.parse(localStorage.getItem(SKEY)||'null');if(c&&typeof c==='object')cfg=Object.assign(cfg,c)}catch(e){}}
+  function saveCfg(){try{localStorage.setItem(SKEY,JSON.stringify(cfg))}catch(e){}}
+  function cfgFields(){Object.keys(CF).forEach(function(id){$(id).value=cfg[CF[id]]||''})}
+  Object.keys(CF).forEach(function(id){$(id).oninput=function(){cfg[CF[id]]=this.value.trim();saveCfg();renderRekap()}});
+  function rekapPeriode(){
+    var m=$('rMode').value,b=$('rBulan').value,y=String($('rTahun').value),da=$('rDari').value,sa=$('rSampai').value;
+    return data.filter(function(e){
+      if(m==='semua')return true;
+      if(m==='bulan')return e.tgl.slice(0,7)===b;
+      if(m==='tahun')return e.tgl.slice(0,4)===y;
+      return !!da&&!!sa&&e.tgl>=da&&e.tgl<=sa;
+    }).sort(function(a,b){return a.tgl<b.tgl?-1:a.tgl>b.tgl?1:a.id-b.id});
+  }
+  function rekapData(){return rekapPeriode().filter(function(e){return !rExcl[e.tgl]})}
+  function rekapJudul(){
+    var m=$('rMode').value,b=$('rBulan').value;
+    if(m==='bulan')return BULAN[+b.slice(5)-1]+' '+b.slice(0,4);
+    if(m==='tahun')return 'Tahun '+$('rTahun').value;
+    if(m==='rentang')return $('rDari').value&&$('rSampai').value?sd($('rDari').value)+' – '+sd($('rSampai').value):'';
+    return 'Seluruh data';
+  }
+  function tbl(head,rws){return '<div class="scroll"><table class="tbl"><thead><tr>'+head+'</tr></thead><tbody>'+rws+'</tbody></table></div>'}
+  function renderRekap(){
+    var m=$('rMode').value;
+    $('rBulan').classList.toggle('hide',m!=='bulan');$('rTahun').classList.toggle('hide',m!=='tahun');
+    $('rDari').classList.toggle('hide',m!=='rentang');$('rSampai').classList.toggle('hide',m!=='rentang');
+    if(m==='bulan'&&!$('rBulan').value)return;
+    var all=rekapPeriode(),l=all.filter(function(e){return !rExcl[e.tgl]});
+    var dts={};all.forEach(function(e){dts[e.tgl]=(dts[e.tgl]||0)+1});
+    var keys=Object.keys(dts).sort(),nEx=keys.filter(function(k){return rExcl[k]}).length;
+    $('rTglList').innerHTML=keys.length?keys.map(function(k){var d=parse(k);return '<label class="rtl"><input type="checkbox" class="cb" data-rt="'+k+'"'+(rExcl[k]?'':' checked')+'> '+HARI[d.getDay()].slice(0,3)+', '+d.getDate()+' '+BULAN[d.getMonth()].slice(0,3)+' <small>('+dts[k]+')</small></label>'}).join(''):'<span style="color:var(--muted)">Belum ada tanggal bercatatan pada periode ini.</span>';
+    $('rTglInfo').textContent=keys.length?'('+(keys.length-nEx)+' dari '+keys.length+' tanggal)':'';
+    function c(st){return l.filter(function(e){return e.status===st}).length}
+    var hn={};l.forEach(function(e){hn[e.tgl]=1});
+    var kop='<div class="kop">'+(cfg.sekolah?'<div class="k1">'+esc(cfg.sekolah)+'</div>':'')+'<div class="k2">REKAP PEKERJAAN PUSTAKAWAN</div><div class="k3">Periode: '+esc(rekapJudul()||'-')+'</div></div>';
+    var sum='<div class="rsum"><div><b>'+l.length+'</b>Total</div><div><b>'+c('Selesai')+'</b>Selesai</div><div><b>'+c('Proses')+'</b>Proses</div><div><b>'+c('Tertunda')+'</b>Tertunda</div><div><b>'+Object.keys(hn).length+'</b>Hari tercatat</div></div>';
+    var body='';
+    if(!l.length)body='<div class="empty">'+(m==='rentang'&&!($('rDari').value&&$('rSampai').value)?'Pilih tanggal awal dan akhir.':'Belum ada catatan pada periode ini.')+'</div>';
+    else{
+      if($('rOpt1').checked){
+        var ck={};l.forEach(function(e){var o=ck[e.kat]=ck[e.kat]||{t:0,Selesai:0,Proses:0,Tertunda:0};o.t++;o[e.status]++});
+        var tot=0,kr=Object.keys(ck).sort(function(a,b){return ck[b].t-ck[a].t}).map(function(k){var o=ck[k];tot+=o.t;return '<tr><td>'+esc(k)+'</td><td class="n"><b>'+o.t+'</b></td><td class="n">'+o.Selesai+'</td><td class="n">'+o.Proses+'</td><td class="n">'+o.Tertunda+'</td></tr>'}).join('');
+        kr+='<tr><td><b>Total</b></td><td class="n"><b>'+tot+'</b></td><td class="n"><b>'+c('Selesai')+'</b></td><td class="n"><b>'+c('Proses')+'</b></td><td class="n"><b>'+c('Tertunda')+'</b></td></tr>';
+        body+='<h3 class="ct rh">Ringkasan per kategori</h3>'+tbl('<th>Kategori</th><th class="n">Jumlah</th><th class="n">Selesai</th><th class="n">Proses</th><th class="n">Tertunda</th>',kr);
+      }
+      if($('rOpt2').checked){
+        var cj={};l.forEach(function(e){var o=cj[e.judul]=cj[e.judul]||{t:0,kat:e.kat};o.t++});
+        var jr=Object.keys(cj).sort(function(a,b){return cj[b].t-cj[a].t||a.localeCompare(b)}).slice(0,10).map(function(j,i){return '<tr><td class="n">'+(i+1)+'</td><td>'+esc(j)+'</td><td>'+esc(cj[j].kat)+'</td><td class="n"><b>'+cj[j].t+'</b></td></tr>'}).join('');
+        body+='<h3 class="ct rh">Pekerjaan yang paling sering dikerjakan</h3>'+tbl('<th class="n">No</th><th>Pekerjaan</th><th>Kategori</th><th class="n">Kali</th>',jr);
+      }
+      if($('rOpt3').checked){
+        var rr='',cur='',no=0;
+        l.forEach(function(e){
+          if(e.tgl!==cur){cur=e.tgl;rr+='<tr class="dg"><td colspan="5">'+fmtTgl(cur)+'</td></tr>'}
+          no++;rr+='<tr><td class="n">'+no+'</td><td>'+esc(e.kat)+'</td><td>'+esc(e.judul)+'</td><td><span class="tag '+esc(e.status)+'">'+esc(e.status)+'</span></td><td>'+esc(e.catatan||'')+'</td></tr>';
+        });
+        body+='<h3 class="ct rh">Rincian per tanggal</h3>'+tbl('<th class="n">No</th><th>Kategori</th><th>Pekerjaan</th><th>Status</th><th>Catatan</th>',rr);
+      }
+    }
+    var n=new Date(),sign='<div class="sign"><div><div>Mengetahui,</div><div>'+esc(cfg.jabAtasan||'Kepala Sekolah')+'</div><div class="sp"></div><b>'+esc(cfg.atasan||'……………………………')+'</b></div><div><div>'+(cfg.kota?esc(cfg.kota)+', ':'')+n.getDate()+' '+BULAN[n.getMonth()]+' '+n.getFullYear()+'</div><div>'+esc(cfg.jabatan||'Pustakawan')+'</div><div class="sp"></div><b>'+esc(cfg.nama||'……………………………')+'</b></div></div>';
+    $('rIsi').innerHTML='<div class="card paper">'+kop+sum+body+sign+'</div>';
+  }
+  ['rMode','rBulan','rTahun','rDari','rSampai'].forEach(function(id){$(id).oninput=function(){rExcl={};renderRekap()}});
+  ['rOpt1','rOpt2','rOpt3'].forEach(function(id){$(id).onchange=renderRekap});
+  $('rTglList').addEventListener('change',function(ev){var k=ev.target.dataset.rt;if(!k)return;if(ev.target.checked)delete rExcl[k];else rExcl[k]=true;renderRekap()});
+  $('rAll').onclick=function(){rExcl={};renderRekap()};
+  $('rNone').onclick=function(){rekapPeriode().forEach(function(e){rExcl[e.tgl]=true});renderRekap()};
+  $('rCetak').onclick=function(){window.print()};
+  $('rCsv').onclick=function(){
+    var rws=[['Tanggal','Kategori','Pekerjaan','Status','Catatan']].concat(rekapData().map(function(e){return [e.tgl,e.kat,e.judul,e.status,e.catatan||'']}));
+    var csv='\ufeff'+rws.map(function(r){return r.map(function(x){return '"'+String(x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
+    unduh('rekap-'+(rekapJudul().replace(/[^a-z0-9]+/gi,'-').toLowerCase()||'data')+'.csv',csv,'text/csv');toast('Rekap diunduh');
+  };
+  function rPreset(p){
+    var n=new Date(),y=n.getFullYear(),mo=n.getMonth();
+    if(p==='minggu'){var dw=(n.getDay()+6)%7;$('rMode').value='rentang';$('rDari').value=iso(new Date(y,mo,n.getDate()-dw));$('rSampai').value=iso(new Date(y,mo,n.getDate()-dw+6))}
+    else if(p==='bulan'){$('rMode').value='bulan';$('rBulan').value=iso(n).slice(0,7)}
+    else{$('rMode').value='bulan';$('rBulan').value=iso(new Date(y,mo-1,1)).slice(0,7)}
+    rExcl={};renderRekap();
+  }
+
+  /* kalender */
+  var calY=new Date().getFullYear(),calM=new Date().getMonth(),calSel=iso(new Date());
+  function renderKal(){
+    var jm={},tm={},am={},ag={},today=iso(new Date());
+    data.forEach(function(e){jm[e.tgl]=(jm[e.tgl]||0)+1});
+    todos.forEach(function(t){if(t.tenggat&&!t.selesai){var o=tm[t.tenggat]=tm[t.tenggat]||{n:0,late:false};o.n++;if(t.tenggat<today)o.late=true}});
+    arsip.forEach(function(a){if(a.tgl)am[a.tgl]=(am[a.tgl]||0)+1;if(a.pinjam&&a.pinjam.batas)am[a.pinjam.batas]=(am[a.pinjam.batas]||0)+1});
+    agenda.forEach(function(a){var c=parse(a.tgl),end=parse(a.tglSelesai||a.tgl);for(var n=0;c<=end&&n<62;n++){var kk=iso(c);ag[kk]=(ag[kk]||0)+1;c=new Date(c.getFullYear(),c.getMonth(),c.getDate()+1)}});
+    var first=(new Date(calY,calM,1).getDay()+6)%7,dim=new Date(calY,calM+1,0).getDate();
+    var h=['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(function(x){return '<div class="kh">'+x+'</div>'}).join('');
+    for(var i=0;i<first;i++)h+='<div class="kd pad"></div>';
+    for(var d=1;d<=dim;d++){
+      var k=calY+'-'+String(calM+1).padStart(2,'0')+'-'+String(d).padStart(2,'0'),b='';
+      if(jm[k])b+='<i class="kb b1">'+jm[k]+'</i>';
+      if(tm[k])b+='<i class="kb b2'+(tm[k].late?' late':'')+'">'+tm[k].n+'</i>';
+      if(am[k])b+='<i class="kb b3">'+am[k]+'</i>';
+      if(ag[k])b+='<i class="kb b4">'+ag[k]+'</i>';
+      h+='<button type="button" class="kd'+(k===today?' today':'')+(k===calSel?' sel':'')+'" data-kd="'+k+'" aria-label="'+fmtTgl(k)+'"><b>'+d+'</b><span class="kbs">'+b+'</span></button>';
+    }
+    $('kalGrid').innerHTML=h;$('kalJudul').textContent=BULAN[calM]+' '+calY;
+    var gs=agendaOn(calSel),js=data.filter(function(e){return e.tgl===calSel}),ts=todos.filter(function(t){return t.tenggat===calSel}),
+        as=arsip.filter(function(a){return a.tgl===calSel}),ls=arsip.filter(function(a){return a.pinjam&&a.pinjam.batas===calSel});
+    var sh=function(t){return '<h3 class="ct" style="font-size:15px;margin:16px 0 4px">'+t+'</h3>'};
+    var out='<div class="bar noprint" style="align-items:center"><h2 class="ct" style="flex:2 1 220px;margin:0">'+fmtTgl(calSel)+'</h2><button class="btn" data-addday="'+calSel+'" style="flex:0 0 auto">+ Pekerjaan</button><button class="btn soft" data-tadd="'+calSel+'" style="flex:0 0 auto">+ To-do</button><button class="btn soft" data-agadd="'+calSel+'" style="flex:0 0 auto">+ Agenda</button></div>';
+    if(gs.length)out+=sh('Agenda')+gs.map(agItem).join('');
+    if(js.length)out+=sh('Jurnal pekerjaan')+js.map(function(e){return itemHtml(e,true)}).join('');
+    if(ts.length)out+=sh('Tenggat to-do')+ts.map(function(t){
+      var di=t.selesai?null:dueInfo(t.tenggat);
+      return '<div class="titem'+(t.selesai?' done':'')+'"><button class="chk'+(t.selesai?' on':'')+'" data-ttog="'+t.id+'" aria-label="Tandai selesai">'+(t.selesai?'✓':'')+'</button><div><h3>'+esc(t.judul)+'</h3><div>'+(di?'<span class="due '+di.c+'">'+di.x+'</span>':'<span class="due none">Selesai</span>')+'</div></div><div></div></div>';
+    }).join('');
+    if(as.length||ls.length)out+=sh('Arsip')+as.map(function(a){return '<div class="item"><div><h3>'+esc(a.perihal)+'</h3><div><span class="tag">'+esc(a.no)+'</span><span class="tag">Tanggal dokumen</span></div></div><div></div></div>'}).join('')+ls.map(function(a){return '<div class="item"><div><h3>'+esc(a.perihal)+'</h3><div><span class="tag">'+esc(a.no)+'</span><span class="tag Dipinjam">Batas kembali: '+esc(a.pinjam.oleh)+'</span></div></div><div></div></div>'}).join('');
+    if(!gs.length&&!js.length&&!ts.length&&!as.length&&!ls.length)out+='<div class="empty">Belum ada catatan di tanggal ini.</div>';
+    $('kalDetail').innerHTML=out;
+  }
+  document.addEventListener('click',function(ev){
+    var el=ev.target.closest?ev.target.closest('[data-kd],[data-kn],[data-tadd],[data-rp]'):null;if(!el)return;
+    var d=el.dataset;
+    if(d.kd){var p=d.kd.split('-');calSel=d.kd;calY=+p[0];calM=+p[1]-1;renderKal()}
+    else if(d.kn!==undefined){
+      var n=+d.kn,now=new Date();
+      if(n===0){calY=now.getFullYear();calM=now.getMonth();calSel=iso(now)}
+      else{var m=new Date(calY,calM+n,1);calY=m.getFullYear();calM=m.getMonth();calSel=(calY===now.getFullYear()&&calM===now.getMonth())?iso(now):iso(m)}
+      renderKal();
+    }else if(d.tadd){show('todo');tReset();$('tTenggat').value=d.tadd;$('tJudul').focus()}
+    else if(d.rp){rPreset(d.rp)}
+  });
+
+  /* menu */
+  function menu(open){
+    $('menu').classList.toggle('open',open);$('scrim').classList.toggle('show',open);
+    $('burger').setAttribute('aria-expanded',open?'true':'false');
+    if(open){var on=document.querySelector('.nav button.on');if(on)on.focus()}
+  }
+  $('burger').onclick=function(){menu(!$('menu').classList.contains('open'))};
+  $('scrim').onclick=function(){menu(false)};
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')menu(false)});
+
+  /* agenda */
+  var agEditing=0;
+  function agendaOn(k){return agenda.filter(function(a){return a.tgl<=k&&(a.tglSelesai||a.tgl)>=k}).sort(function(a,b){return (a.jam||'99')<(b.jam||'99')?-1:1})}
+  function agItem(a){
+    var multi=a.tglSelesai&&a.tglSelesai!==a.tgl;
+    return '<div class="item"><div><h3>'+esc(a.judul)+'</h3><div><span class="tag Ag">📅 '+(multi?sd(a.tgl)+' – '+sd(a.tglSelesai):'Agenda')+'</span>'+(a.jam?'<span class="tag">🕒 '+esc(a.jam)+'</span>':'')+(a.tempat?'<span class="tag">📍 '+esc(a.tempat)+'</span>':'')+'</div>'+(a.catatan?'<p>'+esc(a.catatan)+'</p>':'')+'</div>'+
+      '<div class="acts"><button class="link" data-agedit="'+a.id+'">Ubah</button><button class="link" style="color:var(--bad)" data-agdel="'+a.id+'">Hapus</button></div></div>';
+  }
+  function agClose(){agEditing=0;$('agForm').classList.add('hide')}
+  function agOpen(a,tgl){
+    agEditing=a?a.id:0;$('agForm').classList.remove('hide');
+    $('agFormJudul').textContent=a?'Ubah agenda':'Agenda baru';
+    $('agJudul').value=a?a.judul:'';$('agTgl').value=a?a.tgl:(tgl||calSel);$('agAkhir').value=a&&a.tglSelesai||'';
+    $('agJam').value=a&&a.jam||'';$('agTempat').value=a&&a.tempat||'';$('agCatatan').value=a&&a.catatan||'';
+    $('agSimpan').textContent=a?'Simpan perubahan':'Simpan agenda';
+    window.scrollTo(0,0);$('agJudul').focus();
+  }
+  function renderAgBeranda(){
+    var n=new Date(),t0=iso(n),t7=iso(new Date(n.getFullYear(),n.getMonth(),n.getDate()+7));
+    var l=agenda.filter(function(a){return (a.tglSelesai||a.tgl)>=t0&&a.tgl<=t7}).sort(function(a,b){
+      var x=a.tgl<t0?t0:a.tgl,y=b.tgl<t0?t0:b.tgl;return x<y?-1:x>y?1:(a.jam||'99')<(b.jam||'99')?-1:1}).slice(0,6);
+    $('listAgenda').innerHTML=l.length?l.map(function(a){
+      var di=dueInfo(a.tgl<t0?t0:a.tgl);
+      return '<div class="item"><div><h3>'+esc(a.judul)+'</h3><div><span class="due '+di.c+'">'+di.x+'</span>'+(a.jam?'<span class="tag">🕒 '+esc(a.jam)+'</span>':'')+(a.tempat?'<span class="tag">📍 '+esc(a.tempat)+'</span>':'')+'</div></div><div></div></div>';
+    }).join(''):'<div class="empty">Tidak ada agenda dalam 7 hari ke depan.</div>';
+  }
+  $('agBatal').onclick=agClose;
+  $('agSimpan').onclick=function(){
+    var j=$('agJudul').value.replace(/\s+/g,' ').trim(),t=$('agTgl').value,ak=$('agAkhir').value;
+    if(!j){toast('Isi judul agenda');$('agJudul').focus();return}
+    if(!t){toast('Pilih tanggal agenda');return}
+    if(ak&&ak<t){toast('Tanggal akhir tidak boleh sebelum tanggal mulai');return}
+    var o={id:agEditing||Date.now(),tgl:t,tglSelesai:ak&&ak!==t?ak:'',judul:j,jam:$('agJam').value,tempat:$('agTempat').value.trim(),catatan:$('agCatatan').value.trim()};
+    var baru=!agEditing;
+    if(agEditing)agenda=agenda.map(function(a){return a.id===agEditing?o:a});else agenda.push(o);
+    var p=t.split('-');calSel=t;calY=+p[0];calM=+p[1]-1;
+    save();agClose();render();toast(baru?'Agenda disimpan':'Agenda diperbarui');
+  };
+  document.addEventListener('click',function(ev){
+    var el=ev.target.closest?ev.target.closest('[data-agadd],[data-agedit],[data-agdel]'):null;if(!el)return;
+    var d=el.dataset;
+    if(d.agadd){agOpen(null,d.agadd==='sel'?calSel:d.agadd)}
+    else if(d.agedit){var a=agenda.filter(function(x){return x.id===+d.agedit})[0];if(a)agOpen(a)}
+    else if(d.agdel){var b=agenda.filter(function(x){return x.id===+d.agdel})[0];if(b&&confirm('Hapus agenda "'+b.judul+'"?')){agenda=agenda.filter(function(x){return x.id!==b.id});save();render();toast('Agenda dihapus')}}
+  });
+
+  /* to-do */
+  var tEditing=0;
+  function dueInfo(t){
+    if(!t)return{c:'none',x:'Tanpa tenggat',n:9999};
+    var d=parse(t),n=Math.round((d-parse(iso(new Date())))/864e5),tg=d.getDate()+' '+BULAN[d.getMonth()].slice(0,3);
+    if(n<0)return{c:'late',x:'Terlambat '+(-n)+' hari ('+tg+')',n:n};
+    if(n===0)return{c:'soon',x:'Hari ini',n:0};
+    if(n===1)return{c:'soon',x:'Besok',n:1};
+    return{c:n<=3?'soon':'ok',x:n+' hari lagi ('+tg+')',n:n};
+  }
+  function todoSort(a,b){
+    if(!!a.selesai!==!!b.selesai)return a.selesai?1:-1;
+    var x=a.tenggat||'9999',y=b.tenggat||'9999';return x<y?-1:x>y?1:a.id-b.id;
+  }
+  function tReset(){tEditing=0;$('tJudul').value='';$('tTenggat').value='';$('tCatatan').value='';$('tSimpan').textContent='Tambah ke to-do';$('tBatal').classList.add('hide')}
+  function renderTodo(){
+    var cur=$('tKat').value;$('tKat').innerHTML=optHtml(cur);
+    var f=$('tFilter').value;
+    var l=todos.filter(function(t){return f==='semua'||(f==='selesai'?t.selesai:!t.selesai)}).sort(todoSort);
+    $('tList').innerHTML=l.length?l.map(function(t){
+      var di=t.selesai?null:dueInfo(t.tenggat);
+      return '<div class="titem'+(t.selesai?' done':'')+'"><button class="chk'+(t.selesai?' on':'')+'" data-ttog="'+t.id+'" aria-label="'+(t.selesai?'Tandai belum selesai':'Tandai selesai')+'">'+(t.selesai?'✓':'')+'</button>'+
+        '<div><h3>'+esc(t.judul)+'</h3><div>'+(di?'<span class="due '+di.c+'">'+di.x+'</span>':'<span class="due none">Selesai</span>')+(t.kat?'<span class="tag">'+esc(t.kat)+'</span>':'')+'</div>'+(t.catatan?'<p>'+esc(t.catatan)+'</p>':'')+'</div>'+
+        '<div class="acts"><button class="link" data-tedit="'+t.id+'">Ubah</button><button class="link" data-tjur="'+t.id+'">Ke jurnal</button><button class="link" style="color:var(--bad)" data-tdel="'+t.id+'">Hapus</button></div></div>';
+    }).join(''):'<div class="empty">'+(f==='selesai'?'Belum ada to-do yang selesai.':f==='belum'?'Tidak ada to-do yang belum selesai.':'Belum ada to-do.')+'</div>';
+    var urg=todos.filter(function(t){return !t.selesai&&t.tenggat&&dueInfo(t.tenggat).n<=3}).sort(todoSort);
+    if(!urg.length){$('deadline').innerHTML='';return}
+    var late=urg.some(function(t){return dueInfo(t.tenggat).n<0});
+    $('deadline').innerHTML='<div class="alert '+(late?'late':'soon')+'" role="alert"><div style="font-size:24px">'+(late?'⚠️':'⏰')+'</div><div><b>'+(late?'Ada to-do yang lewat tenggat':'Tenggat segera tiba')+'</b><ul>'+
+      urg.slice(0,5).map(function(t){return '<li>'+esc(t.judul)+' – '+dueInfo(t.tenggat).x+'</li>'}).join('')+'</ul>'+(urg.length>5?'<div>dan '+(urg.length-5)+' lainnya</div>':'')+
+      '<button class="link" style="padding-left:0" data-go="todo">Buka To-do</button></div></div>';
+  }
+  $('tFilter').oninput=renderTodo;
+  $('tBatal').onclick=tReset;
+  $('tSimpan').onclick=function(){
+    var j=$('tJudul').value.replace(/\s+/g,' ').trim();
+    if(!j){toast('Isi dulu pekerjaannya');$('tJudul').focus();return}
+    var o={judul:canon(j),tenggat:$('tTenggat').value,kat:$('tKat').value,catatan:$('tCatatan').value.trim()};
+    if(tEditing){todos=todos.map(function(t){if(t.id!==tEditing)return t;o.id=t.id;o.selesai=t.selesai;return o});toast('To-do diperbarui')}
+    else{o.id=Date.now();o.selesai=false;todos.push(o);toast('To-do ditambahkan')}
+    save();tReset();render();
+  };
+  document.addEventListener('click',function(ev){
+    var d=ev.target.dataset;if(!d)return;
+    function cari(id){return todos.filter(function(x){return x.id===+id})[0]}
+    if(d.go){show(d.go)}
+    else if(d.ttog){todos.forEach(function(x){if(x.id===+d.ttog)x.selesai=!x.selesai});save();render()}
+    else if(d.tedit){
+      var t=cari(d.tedit);if(!t)return;
+      tEditing=t.id;$('tJudul').value=t.judul;$('tTenggat').value=t.tenggat||'';$('tKat').innerHTML=optHtml(t.kat);$('tCatatan').value=t.catatan||'';
+      $('tSimpan').textContent='Simpan perubahan';$('tBatal').classList.remove('hide');$('tJudul').focus();window.scrollTo(0,0);
+    }else if(d.tdel){
+      if(confirm('Hapus to-do ini?')){todos=todos.filter(function(x){return x.id!==+d.tdel});save();render();toast('To-do dihapus')}
+    }else if(d.tjur){
+      var u=cari(d.tjur);if(!u)return;
+      show('jurnal');resetForm();rows[0].judul=u.judul;rows[0].catatan=u.catatan||'';if(u.kat)rows[0].kat=u.kat;renderRows();
+      toast('Sudah masuk formulir jurnal. Tekan Simpan.');
+    }
+  });
+
+  /* arsip */
+  var DEF_FMT='{no}/{jenis}/{blr}/{thn}',ROM=['I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII'];
+  var DEF_KODE={'Surat masuk':'SM','Surat keluar':'SK','Notulen rapat':'NR','Laporan':'LAP','SK / Surat keputusan':'KEP','Dokumen lain':'DOK'};
+  function autoKode(nama,used){
+    var w=nama.replace(/[^A-Za-z0-9 ]+/g,' ').trim().split(/\s+/).filter(Boolean);
+    var k=(w.length>1?w.map(function(x){return x[0]}).join('').slice(0,4):(w[0]||'X').slice(0,3)).toUpperCase(),b=k,i=2;
+    while(used.indexOf(k)>-1){k=b+i;i++}
+    return k;
+  }
+  function kodeJenis(j){
+    if(!j)return '';
+    if(!kodeJ[j]){var used=Object.keys(kodeJ).map(function(x){return kodeJ[x]});kodeJ[j]=(DEF_KODE[j]&&used.indexOf(DEF_KODE[j])<0)?DEF_KODE[j]:autoKode(j,used)}
+    return kodeJ[j];
+  }
+  function lokKode(t){
+    if(!t)return '';
+    var key=t.toLowerCase();if(kodeL[key])return kodeL[key];
+    return t.replace(/[^A-Za-z0-9 ]+/g,' ').trim().split(/\s+/).filter(Boolean).map(function(x){return /^\d+$/.test(x)?x:x[0].toUpperCase()}).join('').slice(0,8);
+  }
+  function lokList(){var o={};arsip.forEach(function(a){if(a.lok)o[a.lok]=1});return Object.keys(o).sort()}
+  function scopeKey(jn,tg){
+    var sc=cfg.noScope||'thn';
+    return sc==='semua'?'semua':sc==='bln'?'bln:'+tg.slice(0,7):sc==='jenis'?'jenis:'+jn+':'+tg.slice(0,4):'thn:'+tg.slice(0,4);
+  }
+  function nextSeq(key){var mx=0;arsip.forEach(function(a){if(a.seqKey===key&&a.seq>mx)mx=a.seq});return mx+1}
+  function fmtNo(jn,tg,lk,seq){
+    var t=cfg.fmtNo||DEF_FMT;if(t.indexOf('{no}')<0)t+='-{no}';
+    var m=+tg.slice(5,7);
+    return t.replace(/\{no\}/g,String(seq).padStart(3,'0')).replace(/\{jenis\}/g,kodeJenis(jn)).replace(/\{bln\}/g,String(m).padStart(2,'0')).replace(/\{blr\}/g,ROM[m-1]||'').replace(/\{thn\}/g,tg.slice(0,4)).replace(/\{lok\}/g,lokKode(lk)).replace(/\{unit\}/g,cfg.kodeUnit||'')
+      .replace(/([\/\-.])\1+/g,'$1').replace(/^[\/\-.\s]+|[\/\-.\s]+$/g,'');
+  }
+  function aSuggest(force){
+    var el=$('aNo');if(!force&&el.dataset.manual==='1')return;
+    var jn=$('aJenis').value,tg=$('aTgl').value||iso(new Date()),lk=$('aLok').value.trim(),key=scopeKey(jn,tg),seq=nextSeq(key);
+    if(aEditing){var cur=aFind(aEditing);if(cur&&cur.seqKey===key&&cur.seq)seq=cur.seq}
+    var v=fmtNo(jn,tg,lk,seq);
+    el.value=v;el.dataset.manual='';el.dataset.sugg=v;el.dataset.seq=seq;el.dataset.key=key;
+  }
+  function nInit(){$('nFmt').value=cfg.fmtNo;$('nScope').value=cfg.noScope;$('nUnit').value=cfg.kodeUnit||'';nPreview()}
+  function nPreview(){
+    var tg=iso(new Date()),jn=ajenis[0]||'',lk=(arsip.filter(function(a){return a.lok})[0]||{}).lok||'Lemari A, Rak 2';
+    $('nContoh').textContent='— contoh: '+fmtNo(jn,tg,lk,nextSeq(scopeKey(jn,tg)));
+    var ada=false;Array.prototype.forEach.call($('nPreset').options,function(o){if(o.value&&o.value===cfg.fmtNo)ada=true});
+    $('nPreset').value=ada?cfg.fmtNo:'';
+  }
+  function nChanged(){saveCfg();nPreview();if(!$('aForm').classList.contains('hide')&&!aEditing)aSuggest()}
+  $('nPreset').onchange=function(){if(!this.value)return;cfg.fmtNo=this.value;$('nFmt').value=this.value;nChanged()};
+  $('nFmt').oninput=function(){cfg.fmtNo=this.value.trim()||DEF_FMT;nChanged()};
+  $('nScope').onchange=function(){cfg.noScope=this.value;nChanged()};
+  $('nUnit').oninput=function(){cfg.kodeUnit=this.value.trim().toUpperCase().replace(/[^A-Z0-9]/g,'');nChanged()};
+  $('aNo').oninput=function(){this.dataset.manual='1'};
+  $('aNoAuto').onclick=function(){aSuggest(true)};
+  $('aJenis').onchange=function(){aSuggest()};
+  $('aLok').oninput=function(){aSuggest()};
+  function renderLok(){
+    var l=lokList();
+    $('lList').innerHTML=l.length?l.map(function(k,i){return '<div class="krow"><span class="nm">'+esc(k)+'</span><span class="tag">Kode: '+esc(lokKode(k))+'</span><button class="link" data-lkode="'+i+'">Ubah kode</button></div>'}).join(''):'<div class="empty">Belum ada lokasi. Daftar muncul setelah ada arsip dengan lokasi simpan.</div>';
+  }
+  var aEditing=0,aLimit=50,A_STAT=['Diterima','Diproses','Tersimpan','Dipinjam'];
+  function sd(s){var d=parse(s);return d.getDate()+' '+BULAN[d.getMonth()].slice(0,3)+' '+d.getFullYear()}
+  function ajOpt(sel){var l=ajenis.slice();if(sel&&l.indexOf(sel)<0)l.push(sel);return l.map(function(k){return '<option'+(k===sel?' selected':'')+'>'+esc(k)+'</option>'}).join('')}
+  function nextNo(tgl){
+    var y=(tgl||iso(new Date())).slice(0,4),mx=0;
+    arsip.forEach(function(a){var m=/^ARS-(\d{4})-(\d+)$/.exec(a.no||'');if(m&&m[1]===y&&+m[2]>mx)mx=+m[2]});
+    return 'ARS-'+y+'-'+String(mx+1).padStart(3,'0');
+  }
+  function aLoanToggle(){var p=$('aStatus').value==='Dipinjam';$('aPinjam').classList.toggle('hide',!p);if(p&&!$('aPTgl').value)$('aPTgl').value=iso(new Date())}
+  function aClose(){aEditing=0;$('aForm').classList.add('hide')}
+  function aStatOpts(sel){return A_STAT.filter(function(x){return x!=='Dipinjam'||$('aBentuk').value!=='Digital'}).map(function(x){return '<option'+(x===sel?' selected':'')+'>'+x+'</option>'}).join('')}
+  function aBentukChange(){
+    $('aStatus').innerHTML=aStatOpts($('aStatus').value);
+    $('aDigital').classList.toggle('hide',$('aBentuk').value==='Fisik');
+    $('aTglUpW').classList.toggle('hide',$('aUnggah').value!=='sudah');
+    aLoanToggle();
+  }
+  function aOpen(a){
+    aEditing=a?a.id:0;
+    $('aForm').classList.remove('hide');
+    $('aFormJudul').textContent=a?'Ubah arsip':'Arsip baru';
+    $('aJenis').innerHTML=ajOpt(a?a.jenis:ajenis[0]);
+    $('aBentuk').value=a?(a.bentuk||'Fisik'):'Digital';
+    $('aStatus').innerHTML=aStatOpts(a?a.status:'Diterima');
+    var t=a?a.tgl:iso(new Date()),p=(a&&a.pinjam)||{};
+    $('aNo').value=a?a.no:'';$('aTgl').value=t||'';$('aPerihal').value=a?a.perihal:'';$('aAsal').value=a&&a.asal||'';
+    $('aLok').value=a&&a.lok||'';$('aCatatan').value=a&&a.catatan||'';
+    $('aFile').value=a&&a.file||'';$('aUnggah').value=a&&a.unggah||'belum';$('aTglUp').value=a&&a.unggahTgl||'';$('aDrive').value=a&&a.drive||'';
+    $('aPOleh').value=p.oleh||'';$('aPTgl').value=p.tgl||'';$('aPBatas').value=p.batas||'';
+    if(a)$('aNo').dataset.manual='1';else{$('aNo').dataset.manual='';aSuggest()}
+    aBentukChange();$('aSimpan').textContent=a?'Simpan perubahan':'Simpan arsip';
+    window.scrollTo(0,0);
+  }
+  function isBelum(a){return (a.bentuk||'Fisik')!=='Fisik'&&a.unggah!=='sudah'}
+  function aFind(id){return arsip.filter(function(x){return x.id===+id})[0]}
+  function aItem(a){
+    var pj=a.pinjam,parts=[],bt=a.bentuk||'Fisik',upTag='';
+    if(bt!=='Fisik')upTag=a.unggah==='sudah'?'<span class="tag Tersimpan">Terunggah'+(a.unggahTgl?' '+sd(a.unggahTgl):'')+'</span>':'<span class="tag Dipinjam">Belum diunggah</span>';
+    if(a.tgl)parts.push('Tanggal dokumen: '+sd(a.tgl));
+    if(a.asal)parts.push(esc(a.asal));
+    if(a.lok)parts.push('Lokasi: '+esc(a.lok));
+    if(a.file)parts.push('File: '+esc(a.file));
+    var loan='';
+    if(pj){var di=pj.batas?dueInfo(pj.batas):null;loan='<p><b>Dipinjam oleh '+esc(pj.oleh)+'</b>'+(pj.tgl?' sejak '+sd(pj.tgl):'')+(pj.batas?', batas kembali '+sd(pj.batas):'')+' '+(di?'<span class="due '+di.c+'">'+di.x+'</span>':'')+'</p>'}
+    var rw=(a.riwayat||[]).slice(-3).map(function(r){return esc(r.oleh)+' ('+sd(r.tgl)+' – '+sd(r.kembali)+')'}).join('; ');
+    return '<div class="item"><div><h3>'+esc(a.perihal)+'</h3><div><span class="tag">'+esc(a.no)+'</span><span class="tag">'+esc(a.jenis)+'</span><span class="tag '+esc(a.status)+'">'+esc(a.status)+'</span><span class="tag">'+esc(bt)+'</span>'+upTag+'</div>'+
+      (parts.length?'<p>'+parts.join(' · ')+'</p>':'')+(a.catatan?'<p>'+esc(a.catatan)+'</p>':'')+(a.drive&&/^https?:\/\//i.test(a.drive)?'<p><a href="'+esc(a.drive)+'" target="_blank" rel="noopener" style="color:var(--blue);font-weight:700">Buka di Drive</a></p>':'')+loan+(rw?'<p>Riwayat pinjam: '+rw+'</p>':'')+'</div>'+
+      '<div class="acts"><button class="link" data-aedit="'+a.id+'">Ubah</button>'+(isBelum(a)?'<button class="link" data-aup1="'+a.id+'">Tandai terunggah</button>':'')+(pj?'<button class="link" data-aret="'+a.id+'">Dikembalikan</button>':(bt==='Digital'?'':'<button class="link" data-apin="'+a.id+'">Pinjamkan</button>'))+'<button class="link" style="color:var(--bad)" data-adel="'+a.id+'">Hapus</button></div></div>';
+  }
+  function aFiltered(){
+    var q=$('aCari').value.trim().toLowerCase(),j=$('aJenisF').value,st=$('aStatusF').value,up=$('aUpF').value;
+    return arsip.filter(function(a){return (!j||a.jenis===j)&&(!st||a.status===st)&&(!up||(up==='belum'?isBelum(a):((a.bentuk||'Fisik')!=='Fisik'&&a.unggah==='sudah')))&&(!q||[a.no,a.perihal,a.asal,a.lok,a.catatan].join(' ').toLowerCase().indexOf(q)>-1)})
+      .sort(function(a,b){var x=a.tgl||'',y=b.tgl||'';return x<y?1:x>y?-1:b.id-a.id});
+  }
+  function renderArsip(){
+    var today=iso(new Date());
+    var pj=arsip.filter(function(a){return a.status==='Dipinjam'&&a.pinjam});
+    var lt=pj.filter(function(a){return a.pinjam.batas&&a.pinjam.batas<today}).length,bu=arsip.filter(isBelum).length;
+    $('aStats').innerHTML='<div class="stat s2"><b>'+arsip.length+'</b><span>Total arsip</span></div><div class="stat s3"><b>'+arsip.filter(function(a){return a.status==='Tersimpan'}).length+'</b><span>Tersimpan</span></div><div class="stat s4"><b>'+pj.length+'</b><span>Sedang dipinjam</span></div><div class="stat s1"><b>'+lt+'</b><span>Lewat batas kembali</span></div><div class="stat s4"><b>'+bu+'</b><span>Belum diunggah</span></div>';
+    var cur=$('aJenisF').value;$('aJenisF').innerHTML='<option value="">Semua jenis</option>'+ajOpt('');$('aJenisF').value=cur;
+    var lk={};arsip.forEach(function(a){if(a.lok)lk[a.lok]=1});
+    $('aLokList').innerHTML=Object.keys(lk).sort().map(function(x){return '<option value="'+esc(x)+'">'}).join('');
+    var l=aFiltered();
+    $('aJumlah').textContent=l.length+' arsip';
+    $('aList').innerHTML=l.length?l.slice(0,aLimit).map(aItem).join('')+(l.length>aLimit?'<div class="noprint" style="text-align:center;padding:12px"><button class="btn soft" data-amore="1">Tampilkan lebih banyak</button></div>':''):'<div class="empty">'+(arsip.length?'Tidak ada arsip yang cocok.':'Belum ada arsip. Tekan “+ Arsip baru” untuk mulai.')+'</div>';
+    $('aTandai').classList.toggle('hide',$('aUpF').value!=='belum'||!l.length);
+    var out='',urg=pj.filter(function(a){return a.pinjam.batas&&dueInfo(a.pinjam.batas).n<=3}).sort(function(a,b){return a.pinjam.batas<b.pinjam.batas?-1:1});
+    if(urg.length){
+      var late=urg.some(function(a){return dueInfo(a.pinjam.batas).n<0});
+      out+='<div class="alert '+(late?'late':'soon')+'" role="alert"><div style="font-size:24px">🗂️</div><div><b>'+(late?'Ada arsip yang belum dikembalikan':'Batas kembali arsip segera tiba')+'</b><ul>'+
+        urg.slice(0,5).map(function(a){return '<li>'+esc(a.perihal)+' – '+esc(a.pinjam.oleh)+', '+dueInfo(a.pinjam.batas).x+'</li>'}).join('')+'</ul><button class="link" style="padding-left:0" data-go="arsip">Buka Arsip</button></div></div>';
+    }
+    var ym=today.slice(0,7),lama=arsip.filter(function(a){return isBelum(a)&&(a.tgl||iso(new Date(a.id))).slice(0,7)<ym});
+    if(lama.length)out+='<div class="alert soon" role="alert"><div style="font-size:24px">☁️</div><div><b>'+lama.length+' arsip digital belum diunggah ke Drive</b><div style="font-size:14px">Dari bulan-bulan sebelumnya.</div><button class="link" style="padding-left:0" data-aup="1">Lihat daftar</button></div></div>';
+    $('arsipNotice').innerHTML=out;
+  }
+  ['aCari','aJenisF','aStatusF','aUpF'].forEach(function(id){$(id).oninput=function(){aLimit=50;renderArsip()}});
+  $('aBaru').onclick=function(){aOpen(null);$('aPerihal').focus()};
+  $('aBatal').onclick=aClose;
+  $('aStatus').onchange=aLoanToggle;
+  $('aTgl').onchange=function(){aSuggest()};
+  $('aJenisBaru').onclick=function(){
+    var nm=prompt('Nama jenis arsip baru:');if(nm===null)return;
+    nm=nm.replace(/\s+/g,' ').trim();if(!nm)return;
+    var ada=ajenis.filter(function(k){return k.toLowerCase()===nm.toLowerCase()})[0];
+    if(!ada){ajenis.push(nm);save();ada=nm}
+    $('aJenis').innerHTML=ajOpt(ada);aSuggest();renderArsip();
+  };
+  $('aSimpan').onclick=function(){
+    var no=$('aNo').value.trim(),pr=$('aPerihal').value.replace(/\s+/g,' ').trim(),st=$('aStatus').value,oleh=$('aPOleh').value.trim();
+    if(!no){toast('Isi nomor arsip');$('aNo').focus();return}
+    if(!pr){toast('Isi perihal dokumen');$('aPerihal').focus();return}
+    if(arsip.some(function(a){return a.id!==aEditing&&String(a.no).toLowerCase()===no.toLowerCase()})){toast('Nomor arsip itu sudah dipakai');$('aNo').focus();return}
+    if(st==='Dipinjam'&&!oleh){toast('Isi nama peminjam');$('aPOleh').focus();return}
+    var bt=$('aBentuk').value,dr=$('aDrive').value.trim(),up=bt==='Fisik'?'':$('aUnggah').value;
+    if(dr&&!/^https?:\/\//i.test(dr)){toast('Tautan Drive harus diawali https://');$('aDrive').focus();return}
+    var prev=aEditing?aFind(aEditing):null,lok=$('aLok').value.replace(/\s+/g,' ').trim();
+    arsip.forEach(function(a){if(a.lok&&a.lok.toLowerCase()===lok.toLowerCase())lok=a.lok});
+    var o={id:prev?prev.id:Date.now(),no:no,tgl:$('aTgl').value,perihal:pr,jenis:$('aJenis').value,asal:$('aAsal').value.trim(),lok:lok,status:st,catatan:$('aCatatan').value.trim(),bentuk:bt,file:bt==='Fisik'?'':$('aFile').value.trim(),unggah:up,unggahTgl:up==='sudah'?($('aTglUp').value||iso(new Date())):'',drive:bt==='Fisik'?'':dr,pinjam:null,riwayat:prev&&prev.riwayat?prev.riwayat.slice():[]};
+    var nEl=$('aNo');
+    if(no===nEl.dataset.sugg){o.seq=+nEl.dataset.seq;o.seqKey=nEl.dataset.key}else if(prev&&prev.no===no&&prev.seq){o.seq=prev.seq;o.seqKey=prev.seqKey}
+    if(st==='Dipinjam')o.pinjam={oleh:oleh,tgl:$('aPTgl').value||iso(new Date()),batas:$('aPBatas').value};
+    if(prev&&prev.pinjam&&(st!=='Dipinjam'||prev.pinjam.oleh!==oleh))o.riwayat.push({oleh:prev.pinjam.oleh,tgl:prev.pinjam.tgl,kembali:iso(new Date())});
+    if(prev)arsip=arsip.map(function(a){return a.id===prev.id?o:a});else arsip.push(o);
+    save();aClose();render();toast(prev?'Arsip diperbarui':'Arsip disimpan');
+  };
+  $('aCsv').onclick=function(){
+    var rws=[['Nomor','Tanggal dokumen','Perihal','Jenis','Asal/pengirim/tujuan','Lokasi simpan','Bentuk','Nama file','Status unggah','Tautan Drive','Status','Peminjam','Batas kembali','Catatan']].concat(aFiltered().map(function(a){var p=a.pinjam||{};return [a.no,a.tgl||'',a.perihal,a.jenis,a.asal||'',a.lok||'',a.bentuk||'Fisik',a.file||'',((a.bentuk||'Fisik')==='Fisik'?'':(a.unggah==='sudah'?'Terunggah':'Belum diunggah')),a.drive||'',a.status,p.oleh||'',p.batas||'',a.catatan||'']}));
+    var csv='\ufeff'+rws.map(function(r){return r.map(function(x){return '"'+String(x).replace(/"/g,'""')+'"'}).join(',')}).join('\r\n');
+    unduh('register-arsip-'+iso(new Date())+'.csv',csv,'text/csv');toast('Daftar arsip diunduh');
+  };
+  $('aCetak').onclick=function(){window.print()};
+  document.addEventListener('click',function(ev){
+    var d=ev.target.dataset;if(!d)return;
+    if(d.aedit){var a=aFind(d.aedit);if(a)aOpen(a)}
+    else if(d.apin){var b=aFind(d.apin);if(b){aOpen(b);$('aStatus').value='Dipinjam';aLoanToggle();$('aPOleh').focus()}}
+    else if(d.aret){
+      var c=aFind(d.aret);if(!c||!c.pinjam)return;
+      c.riwayat=(c.riwayat||[]).concat([{oleh:c.pinjam.oleh,tgl:c.pinjam.tgl,kembali:iso(new Date())}]);c.pinjam=null;c.status='Tersimpan';
+      save();render();toast('Arsip ditandai sudah dikembalikan');
+    }else if(d.adel){
+      var e=aFind(d.adel);if(e&&confirm('Hapus arsip "'+e.perihal+'" dari register?')){arsip=arsip.filter(function(x){return x.id!==e.id});save();render();toast('Arsip dihapus')}
+    }else if(d.amore){aLimit+=50;renderArsip()}
+  });
+
+  $('aBentuk').onchange=aBentukChange;
+  $('aUnggah').onchange=function(){if(this.value==='sudah'&&!$('aTglUp').value)$('aTglUp').value=iso(new Date());aBentukChange()};
+  $('aTandai').onclick=function(){
+    var l=aFiltered().filter(isBelum);if(!l.length)return;
+    if(!confirm('Tandai '+l.length+' arsip yang tampil sebagai sudah diunggah ke Drive?'))return;
+    var t=iso(new Date());l.forEach(function(a){a.unggah='sudah';a.unggahTgl=t});save();render();toast(l.length+' arsip ditandai terunggah');
+  };
+  function renderJenis(){
+    $('jList').innerHTML=ajenis.map(function(k,i){
+      var n=arsip.filter(function(a){return a.jenis===k}).length;
+      return '<div class="krow"><span class="nm">'+esc(k)+'</span><span class="tag">Kode: '+esc(kodeJenis(k))+'</span><small>'+n+' arsip</small><button class="link" data-jkode="'+i+'">Ubah kode</button><button class="link" data-jren="'+i+'">Ubah nama</button><button class="link" style="color:var(--bad)" data-jdel="'+i+'">Hapus</button></div>';
+    }).join('');
+  }
+  function tambahJenis(){
+    var nm=$('jBaru').value.replace(/\s+/g,' ').trim();
+    if(!nm){toast('Tulis nama jenisnya');return}
+    if(ajenis.some(function(k){return k.toLowerCase()===nm.toLowerCase()})){toast('Jenis itu sudah ada');return}
+    ajenis.push(nm);save();$('jBaru').value='';render();toast('Jenis arsip ditambahkan');
+  }
+  $('jTambah').onclick=tambahJenis;
+  $('jBaru').addEventListener('keydown',function(ev){if(ev.key==='Enter'){ev.preventDefault();tambahJenis()}});
+  document.addEventListener('click',function(ev){
+    var d=ev.target.dataset;if(!d)return;
+    if(d.aup1){var a=aFind(d.aup1);if(a){a.unggah='sudah';a.unggahTgl=iso(new Date());save();render();toast('Ditandai sudah diunggah')}}
+    else if(d.aup){show('arsip');$('aUpF').value='belum';renderArsip()}
+    else if(d.jkode){
+      var kk=ajenis[+d.jkode],nv=prompt('Kode untuk jenis "'+kk+'" (huruf/angka, tanpa spasi):',kodeJenis(kk));if(nv===null)return;
+      nv=nv.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);
+      if(!nv){toast('Kode tidak boleh kosong');return}
+      if(ajenis.some(function(x){return x!==kk&&kodeJenis(x)===nv})){toast('Kode itu sudah dipakai jenis lain');return}
+      kodeJ[kk]=nv;save();render();toast('Kode jenis diperbarui');
+    }else if(d.lkode){
+      var lk=lokList()[+d.lkode];if(!lk)return;
+      var lv=prompt('Kode untuk lokasi "'+lk+'" (kosongkan untuk kode otomatis):',lokKode(lk));if(lv===null)return;
+      lv=lv.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,8);
+      if(lv)kodeL[lk.toLowerCase()]=lv;else delete kodeL[lk.toLowerCase()];
+      save();render();toast('Kode lokasi diperbarui');
+    }else if(d.jren){
+      var i=+d.jren,old=ajenis[i],nm=prompt('Nama baru untuk jenis ini:',old);if(nm===null)return;
+      nm=nm.replace(/\s+/g,' ').trim();if(!nm||nm===old)return;
+      var ex=-1;ajenis.forEach(function(k,x){if(x!==i&&k.toLowerCase()===nm.toLowerCase())ex=x});
+      if(ex>-1){
+        if(!confirm('Jenis "'+ajenis[ex]+'" sudah ada. Gabungkan semua arsip ke jenis itu?'))return;
+        nm=ajenis[ex];ajenis.splice(i,1);
+      }else{ajenis[i]=nm;if(kodeJ[old]&&!kodeJ[nm])kodeJ[nm]=kodeJ[old]}
+      delete kodeJ[old];
+      arsip.forEach(function(x){if(x.jenis===old)x.jenis=nm});
+      save();render();toast('Jenis arsip diperbarui');
+    }else if(d.jdel){
+      var k=ajenis[+d.jdel],n=arsip.filter(function(x){return x.jenis===k}).length;
+      if(n){toast('Masih dipakai di '+n+' arsip. Ubah nama atau gabungkan dulu.');return}
+      if(ajenis.length<=1){toast('Sisakan minimal satu jenis');return}
+      if(confirm('Hapus jenis "'+k+'"?')){delete kodeJ[k];ajenis.splice(+d.jdel,1);save();render();toast('Jenis arsip dihapus')}
+    }
+  });
+
+  /* init */
+  load();
+  $('qBulan').value=$('rBulan').value=iso(new Date()).slice(0,7);$('rTahun').value=new Date().getFullYear();$('rDari').value=iso(new Date(new Date().getFullYear(),new Date().getMonth(),1));$('rSampai').value=iso(new Date());loadCfg();cfgFields();nInit();
+  resetForm();
+  var h=location.hash.replace('#','');
+  show(VIEWS.indexOf(h)>-1?h:'beranda');
+  window.addEventListener('hashchange',function(){var x=location.hash.replace('#','');if(VIEWS.indexOf(x)>-1)show(x)});
+})();
+</script>
+<script>
+(function(){
+  var dp=null,b=document.getElementById('pwaBtn');
+  window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;if(b)b.classList.remove('hide')});
+  window.addEventListener('appinstalled',function(){dp=null;if(b)b.classList.add('hide')});
+  if(b)b.onclick=function(){if(!dp)return;dp.prompt();dp.userChoice.then(function(){dp=null;b.classList.add('hide')})};
+  if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
+    window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js').catch(function(){})});
+  }
+})();
+</script>
+</body>
+</html>
