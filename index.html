@@ -18,13 +18,13 @@
 :root{
   --bg:#f3faf5; --card:#ffffff; --ink:#1d3345; --muted:#5f7584; --line:#dbeadf;
   --green:#a8dcb5; --green-soft:#e3f4e8; --blue:#2f6fb3; --blue-soft:#e4effa; --blue-dark:#1f5088;
-  --warn:#c77d1a; --warn-soft:#fdf1dc; --ok:#2e8b57; --ok-soft:#dff3e7; --bad:#b3402f; --bad-soft:#fbe6e2; --ag:#7a56c2; --ag-soft:#ece6f8;
+  --warn:#c77d1a; --warn-soft:#fdf1dc; --ok:#2e8b57; --ok-soft:#dff3e7; --bad:#b3402f; --bad-soft:#fbe6e2; --ag:#7a56c2; --ag-soft:#ece6f8; --lib:#0f7f86; --lib-soft:#ddf2f3;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --bg:#101a17; --card:#18262a; --ink:#e6f1ec; --muted:#9bb2ad; --line:#26393a;
     --green:#3f8a58; --green-soft:#1d3a2b; --blue:#6aa8e6; --blue-soft:#1b3047; --blue-dark:#8cc0f2;
-    --warn:#e3a54f; --warn-soft:#3a2f1a; --ok:#6fcf97; --ok-soft:#1d3a2b; --bad:#f0907f; --bad-soft:#40211d; --ag:#b9a0f0; --ag-soft:#2b2340;
+    --warn:#e3a54f; --warn-soft:#3a2f1a; --ok:#6fcf97; --ok-soft:#1d3a2b; --bad:#f0907f; --bad-soft:#40211d; --ag:#b9a0f0; --ag-soft:#2b2340; --lib:#5fd0d6; --lib-soft:#16363a;
   }
 }
 *{box-sizing:border-box}
@@ -138,7 +138,7 @@ textarea{min-height:84px;resize:vertical}
 .hf{background:var(--blue);height:100%;border-radius:99px}
 .scroll{overflow-x:auto}
 .tbl{width:100%;border-collapse:collapse;font-size:14px}
-.tbl th{background:var(--blue-soft);color:var(--blue-dark);text-align:left;padding:8px 10px;font-weight:800;white-space:nowrap}
+.tbl th{background:var(--blue-soft);color:var(--blue-dark);text-align:center;padding:8px 10px;font-weight:800;white-space:nowrap}
 .tbl td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 .tbl .n{text-align:center}
 .tag.Tersimpan{background:var(--ok-soft);color:var(--ok)}
@@ -171,6 +171,17 @@ textarea{min-height:84px;resize:vertical}
 .rtl{display:flex;gap:8px;align-items:center;font-weight:600;font-size:14px;margin:0}
 .cb{width:auto;padding:0;accent-color:var(--blue)}
 summary{cursor:pointer;font-weight:800}
+.kd.red{background:var(--bad-soft)}.kd.red b{color:var(--bad)}
+.kd.lib{background:var(--lib-soft)}.kd.lib b{color:var(--lib)}
+.kn{display:none;font-size:10px;line-height:1.2;color:var(--muted);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:0 4px}
+.kd.red .kn{color:var(--bad)}.kd.lib .kn{color:var(--lib)}
+.kd.sel{border:2px solid var(--blue);background:var(--blue-soft)}
+.kd.today b{color:#fff}
+.alert.lib{background:var(--lib-soft)}
+.mini{display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:8px 2px;border-top:1px solid var(--line)}
+.mini b{font-weight:700;margin-right:4px}
+.hint{font-size:13px;color:var(--warn);margin-top:6px}
+@media (min-width:761px){.kn{display:block}}
 @media (max-width:760px){
   main{padding-top:16px}
   .row,.dash{grid-template-columns:1fr}
@@ -230,7 +241,7 @@ summary{cursor:pointer;font-weight:800}
           <div class="bar noprint" style="margin-bottom:8px;align-items:center"><h2 class="ct" style="flex:2 1 200px;margin:0">Agenda 7 hari ke depan</h2><button class="btn soft" data-go="kalender" style="flex:0 0 auto">Buka kalender</button></div>
           <div id="listAgenda"></div>
         </div>
-        <div class="card wide"><h2 class="ct">Belum selesai</h2><div id="listBelum"></div></div>
+        <div class="card wide"><div class="bar noprint" style="margin-bottom:8px;align-items:center"><h2 class="ct" style="flex:2 1 200px;margin:0">Belum selesai</h2><button class="btn soft" data-openlist="1" style="flex:0 0 auto">Lihat di Jurnal</button></div><div id="listBelum"></div></div>
       </div>
     </section>
 
@@ -249,6 +260,7 @@ summary{cursor:pointer;font-weight:800}
         <button class="btn soft hide" id="tBatal" type="button">Batal edit</button>
       </div>
       <div class="card">
+        <label class="rtl noprint" style="margin:0 0 12px"><input type="checkbox" class="cb" id="tAuto" checked> Catat otomatis ke Jurnal saat to-do diselesaikan</label>
         <div class="bar noprint"><select id="tFilter" aria-label="Tampilkan"><option value="belum">Belum selesai</option><option value="selesai">Selesai</option><option value="semua">Semua</option></select></div>
         <div id="tList"></div>
       </div>
@@ -258,9 +270,10 @@ summary{cursor:pointer;font-weight:800}
     <section id="v-kalender" class="hide">
       <h1>Kalender</h1>
       <p class="sub">Lihat pekerjaan, tenggat to-do, arsip, dan agenda per tanggal.</p>
-      <div class="bar noprint" style="margin-bottom:16px"><button class="btn" data-agadd="sel" style="flex:0 0 auto">+ Agenda baru</button></div>
+      <div class="bar noprint" style="margin-bottom:16px"><button class="btn" data-agadd="sel" style="flex:0 0 auto">+ Agenda baru</button><button class="btn soft" data-agadd="sel" data-agjenis="libur" style="flex:0 0 auto">+ Hari libur</button></div>
       <form id="agForm" class="card noprint hide" style="margin-bottom:20px" onsubmit="return false">
         <h2 id="agFormJudul" style="margin:0 0 14px;font-size:18px">Agenda baru</h2>
+        <div class="field"><label for="agJenis">Jenis</label><select id="agJenis"><option value="agenda">Agenda / kegiatan</option><option value="libur">Hari libur (libur sekolah, cuti, dll)</option></select></div>
         <div class="field"><label for="agJudul">Judul agenda</label><input id="agJudul" maxlength="140" placeholder="Contoh: Rapat dewan guru"></div>
         <div class="row">
           <div class="field"><label for="agTgl">Tanggal</label><input type="date" id="agTgl"></div>
@@ -282,7 +295,7 @@ summary{cursor:pointer;font-weight:800}
           <button class="btn" data-kn="0" style="flex:0 0 auto">Hari ini</button>
         </div>
         <div class="kal" id="kalGrid"></div>
-        <div class="klg"><span><i class="b1"></i>Jurnal pekerjaan</span><span><i class="b2"></i>Tenggat to-do</span><span><i class="b3"></i>Arsip (tanggal dokumen / batas kembali)</span><span><i class="b4"></i>Agenda</span></div>
+        <div class="klg"><span><i class="b1"></i>Jurnal pekerjaan</span><span><i class="b2"></i>Tenggat to-do</span><span><i class="b3"></i>Arsip (tanggal dokumen / batas kembali)</span><span><i class="b4"></i>Agenda</span><span><i style="background:var(--bad)"></i>Tanggal merah (Minggu dan libur nasional)</span><span><i style="background:var(--lib)"></i>Cuti bersama / hari libur lain</span></div>
       </div>
       <div class="card" id="kalDetail"></div>
     </section>
@@ -336,6 +349,7 @@ summary{cursor:pointer;font-weight:800}
       <form id="form" class="card noprint" style="margin-bottom:20px" onsubmit="return false">
         <h2 id="formJudul" style="margin:0 0 14px;font-size:18px">Catat pekerjaan</h2>
         <div class="field" style="max-width:260px"><label for="fTgl">Tanggal</label><input type="date" id="fTgl"></div>
+        <div id="tPanel"></div>
         <div id="rows"></div>
         
         <div class="bar" style="margin-bottom:0">
@@ -349,7 +363,7 @@ summary{cursor:pointer;font-weight:800}
         <div class="bar noprint">
           <input type="month" id="qBulan" aria-label="Bulan">
           <select id="qKat" aria-label="Filter kategori"><option value="">Semua kategori</option></select>
-          <select id="qStatus" aria-label="Filter status"><option value="">Semua status</option><option>Selesai</option><option>Proses</option><option>Tertunda</option></select>
+          <select id="qStatus" aria-label="Filter status"><option value="">Semua status</option><option value="open">Belum selesai (Proses + Tertunda)</option><option value="none">Tanpa status</option><option>Selesai</option><option>Proses</option><option>Tertunda</option></select>
           <input type="search" id="qCari" placeholder="Cari pekerjaan…" aria-label="Cari">
         </div>
         <div class="bar noprint" style="justify-content:space-between;align-items:center">
@@ -531,7 +545,7 @@ summary{cursor:pointer;font-weight:800}
 
   /* item html */
   function itemHtml(e,withActs){
-    return '<div class="item"><div><h3>'+esc(e.judul)+'</h3><div><span class="tag">'+esc(e.kat)+'</span><span class="tag '+esc(e.status)+'">'+esc(e.status)+'</span></div>'+
+    return '<div class="item"><div><h3>'+esc(e.judul)+'</h3><div><span class="tag">'+esc(e.kat)+'</span>'+(e.status?'<span class="tag '+esc(e.status)+'">'+esc(e.status)+'</span>':'')+'</div>'+
       (e.catatan?'<p>'+esc(e.catatan)+'</p>':'')+'</div>'+
       (withActs?'<div class="acts"><button class="link" data-edit="'+e.id+'">Ubah</button><button class="link" data-done="'+e.id+'">'+(e.status==='Selesai'?'Buka lagi':'Tandai selesai')+'</button><button class="link" style="color:#b3402f" data-del="'+e.id+'">Hapus</button></div>':'<div></div>')+'</div>';
   }
@@ -574,19 +588,29 @@ summary{cursor:pointer;font-weight:800}
       days.push({k:k,n:n,l:HARI[d.getDay()].slice(0,3),d:d.getDate()});if(n>mx)mx=n;
     }
     $('chHari').innerHTML=days.map(function(x){return '<div class="bcol'+(x.k===today?' today':'')+'"><span class="bv">'+x.n+'</span><div class="bb" style="height:'+Math.max(4,Math.round(x.n/mx*110))+'px"></div><span class="bl">'+x.l+'<br>'+x.d+'</span></div>'}).join('');
-    $('chStatus').innerHTML=donut([{n:c(bln,'Selesai'),c:'var(--ok)',l:'Selesai'},{n:c(bln,'Proses'),c:'var(--blue)',l:'Proses'},{n:c(bln,'Tertunda'),c:'var(--warn)',l:'Tertunda'}]);
+    $('chStatus').innerHTML=donut([{n:c(bln,'Selesai'),c:'var(--ok)',l:'Selesai'},{n:c(bln,'Proses'),c:'var(--blue)',l:'Proses'},{n:c(bln,'Tertunda'),c:'var(--warn)',l:'Tertunda'}].concat(bln.filter(function(e){return !e.status}).length?[{n:bln.filter(function(e){return !e.status}).length,c:'var(--muted)',l:'Tanpa status'}]:[]));
     var ck={};bln.forEach(function(e){ck[e.kat]=(ck[e.kat]||0)+1});
     var ks=Object.keys(ck).sort(function(a,b){return ck[b]-ck[a]}),m2=ks.length?ck[ks[0]]:1;
     $('chKat').innerHTML=ks.length?ks.map(function(k){return '<div class="hb"><span class="hn">'+esc(k)+'</span><div class="ht"><div class="hf" style="width:'+Math.round(ck[k]/m2*100)+'%"></div></div><b>'+ck[k]+'</b></div>'}).join(''):'<div class="empty">Belum ada pekerjaan bulan ini.</div>';
-    $('listHariIni').innerHTML=hari.length?hari.map(function(e){return itemHtml(e,true)}).join(''):'<div class="empty">Belum ada catatan hari ini.<br>Mulai dengan menekan “Catat pekerjaan”.</div>';
-    var bs=data.filter(function(e){return e.status!=='Selesai'}).sort(function(a,b){return a.tgl<b.tgl?1:a.tgl>b.tgl?-1:b.id-a.id}).slice(0,8);
-    $('listBelum').innerHTML=bs.length?groupHtml(bs):'<div class="empty">Semua pekerjaan sudah selesai. Bagus!</div>';
+    $('listHariIni').innerHTML=hari.length?hari.map(miniJ).join(''):'<div class="empty">Belum ada catatan hari ini.<br>Mulai dengan menekan “Catat pekerjaan”.</div>';
+    var og={},ol=[];
+    data.forEach(function(e){
+      if(!isOpen(e))return;
+      var k=e.kat+'||'+e.judul.toLowerCase(),o=og[k];
+      if(!o){o=og[k]={kat:e.kat,judul:e.judul,n:0,first:e.tgl,last:e.tgl,tunda:false};ol.push(o)}
+      o.n++;if(e.tgl<o.first)o.first=e.tgl;if(e.tgl>o.last)o.last=e.tgl;if(e.status==='Tertunda')o.tunda=true;
+    });
+    ol.sort(function(a,b){return a.first<b.first?-1:a.first>b.first?1:0});
+    $('listBelum').innerHTML=ol.length?ol.slice(0,8).map(function(o){
+      var u=Math.round((parse(today)-parse(o.first))/864e5),st=o.tunda?'Tertunda':'Proses';
+      return '<div class="mini"><b>'+esc(o.judul)+'</b><span class="tag">'+esc(o.kat)+'</span><span class="tag '+st+'">'+st+'</span><span class="due '+(u>14?'late':u>7?'soon':'ok')+'">'+(u<=0?'Sejak hari ini':'Sejak '+sd(o.first)+' ('+u+' hari)')+(o.n>1?' · '+o.n+' catatan':'')+'</span></div>';
+    }).join('')+(ol.length>8?'<div class="empty" style="padding:12px">+ '+(ol.length-8)+' pekerjaan lain, lihat di Jurnal</div>':''):'<div class="empty">Semua pekerjaan sudah selesai. Bagus!</div>';
   }
 
   function filtered(){
     var b=$('qBulan').value,k=$('qKat').value,s=$('qStatus').value,q=$('qCari').value.trim().toLowerCase();
     return data.filter(function(e){
-      return (!b||e.tgl.slice(0,7)===b)&&(!k||e.kat===k)&&(!s||e.status===s)&&(!q||(e.judul+' '+e.catatan).toLowerCase().indexOf(q)>-1);
+      return (!b||e.tgl.slice(0,7)===b)&&(!k||e.kat===k)&&(!s||(s==='open'?isOpen(e):s==='none'?!e.status:e.status===s))&&(!q||(e.judul+' '+e.catatan).toLowerCase().indexOf(q)>-1);
     }).sort(function(a,b){return a.tgl<b.tgl?1:a.tgl>b.tgl?-1:b.id-a.id});
   }
   function renderJurnal(){
@@ -597,7 +621,7 @@ summary{cursor:pointer;font-weight:800}
   function renderCadangan(){
     $('infoData').textContent=data.length+' catatan jurnal, '+todos.length+' to-do, dan '+arsip.length+' arsip tersimpan di perangkat ini.';
   }
-  function render(){renderBeranda();renderJurnal();renderCadangan();renderKat();renderJenis();renderLok();renderRekap();renderTodo();renderArsip();nPreview();renderKal();renderAgBeranda();refreshLists()}
+  function render(){renderBeranda();renderJurnal();renderCadangan();renderKat();renderJenis();renderLok();renderRekap();renderTodo();renderTPanel();renderArsip();nPreview();renderKal();renderAgBeranda();refreshLists()}
 
   /* form */
   var rows=[],editing=0,STAT=['Selesai','Proses','Tertunda'];
@@ -607,12 +631,12 @@ summary{cursor:pointer;font-weight:800}
   }
   function fillTdl(){$('tdl').innerHTML=titleOpts($('tKat').value)}
   function optHtml(sel){var l=kats.slice();if(sel&&l.indexOf(sel)<0)l.push(sel);return l.map(function(k){return '<option'+(k===sel?' selected':'')+'>'+esc(k)+'</option>'}).join('')}
-  function newRow(p){p=p||{};return{kat:p.kat||kats[0]||'',judul:p.judul||'',status:p.status||'Selesai',catatan:p.catatan||''}}
+  function newRow(p){p=p||{};return{kat:p.kat||kats[0]||'',judul:p.judul||'',status:(p.status===undefined?'':p.status),catatan:p.catatan||''}}
   function rowHtml(r,i){
     return '<div class="rowbox"><div class="rowhead"><b>'+(editing?'Ubah pekerjaan':'Pekerjaan '+(i+1))+'</b>'+(rows.length>1?'<button type="button" class="link" data-rm="'+i+'">Hapus baris</button>':'')+'</div>'+
       '<div class="row"><div class="field"><label>Kategori</label><select data-f="kat">'+optHtml(r.kat)+'</select></div>'+
-      '<div class="field"><label>Status</label><select data-f="status">'+STAT.map(function(x){return '<option'+(x===r.status?' selected':'')+'>'+x+'</option>'}).join('')+'</select></div></div>'+
-      '<div class="field"><label>Pekerjaan</label><input data-f="judul" list="dl'+i+'" autocomplete="off" maxlength="140" placeholder="Ketik, atau pilih dari pekerjaan di kategori ini" value="'+esc(r.judul)+'"><datalist id="dl'+i+'">'+titleOpts(r.kat)+'</datalist></div>'+
+      '<div class="field"><label>Status (opsional)</label><select data-f="status"><option value=""'+(r.status?'':' selected')+'>Tanpa status</option>'+STAT.map(function(x){return '<option'+(x===r.status?' selected':'')+'>'+x+'</option>'}).join('')+'</select></div></div>'+
+      '<div class="field"><label>Pekerjaan</label><input data-f="judul" list="dl'+i+'" autocomplete="off" maxlength="140" placeholder="Ketik, atau pilih dari pekerjaan di kategori ini" value="'+esc(r.judul)+'"><datalist id="dl'+i+'">'+titleOpts(r.kat)+'</datalist><div class="hint" data-hint>'+hintHtml(r.kat,r.judul)+'</div></div>'+
       '<div class="field"><label>Catatan (opsional)</label><input data-f="catatan" placeholder="Keterangan tambahan" value="'+esc(r.catatan)+'"></div></div>';
   }
   function collect(){
@@ -627,7 +651,7 @@ summary{cursor:pointer;font-weight:800}
     $('simpan').textContent=editing?'Simpan perubahan':'Simpan semua';
   }
   function focusJudul(i){var el=document.querySelectorAll('#rows [data-f=judul]');if(el.length)el[i==null?el.length-1:i].focus()}
-  function resetForm(tgl){editing=0;rows=[newRow()];$('fTgl').value=tgl||iso(new Date());renderRows()}
+  function resetForm(tgl){editing=0;rows=[newRow()];$('fTgl').value=tgl||iso(new Date());renderRows();renderTPanel()}
   function canon(j){
     j=j.replace(/\s+/g,' ').trim();var lj=j.toLowerCase();
     for(var i=0;i<data.length;i++){if(data[i].judul.toLowerCase()===lj)return data[i].judul}
@@ -659,7 +683,10 @@ summary{cursor:pointer;font-weight:800}
       data=data.map(function(e){return e.id===editing?{id:e.id,tgl:tgl,kat:r.kat,judul:canon(r.judul),status:r.status,catatan:r.catatan.trim()}:e});
       toast('Catatan diperbarui');save();resetForm();render();
     }else{
+      var op=[];
+      filled.forEach(function(r){if(r.status==='Selesai'){var lj=canon(r.judul).toLowerCase();data.forEach(function(e){if(e.kat===r.kat&&e.judul.toLowerCase()===lj&&isOpen(e)&&op.indexOf(e)<0)op.push(e)})}});
       filled.forEach(function(r,k){data.push({id:Date.now()+k,tgl:tgl,kat:r.kat,judul:canon(r.judul),status:r.status,catatan:r.catatan.trim()})});
+      if(op.length&&confirm('Ada '+op.length+' catatan sebelumnya dengan pekerjaan yang sama yang masih belum selesai. Tandai semuanya selesai juga?'))op.forEach(function(e){e.status='Selesai'});
       toast(filled.length+' pekerjaan disimpan');save();resetForm(tgl);render();
     }
   };
@@ -681,7 +708,7 @@ summary{cursor:pointer;font-weight:800}
     if(d.edit){
       var e=data.filter(function(x){return x.id===+d.edit})[0];if(!e)return;
       show('jurnal');
-      editing=e.id;rows=[newRow(e)];$('fTgl').value=e.tgl;renderRows();focusJudul(0);
+      editing=e.id;rows=[newRow(e)];$('fTgl').value=e.tgl;renderRows();renderTPanel();focusJudul(0);
     }else if(d.addday){
       show('jurnal');resetForm(d.addday);focusJudul(0);
     }else if(d.rm){
@@ -711,6 +738,7 @@ summary{cursor:pointer;font-weight:800}
   });
 
   ['qBulan','qKat','qStatus','qCari'].forEach(function(id){$(id).oninput=renderJurnal});
+  $('qStatus').oninput=function(){if(this.value==='open')$('qBulan').value='';renderJurnal()};
   $('cetak').onclick=function(){
     var b=$('qBulan').value,h=$('judulCetak');
     h.textContent='Rekap pekerjaan'+(b?' – '+BULAN[+b.slice(5)-1]+' '+b.slice(0,4):'');
@@ -753,6 +781,7 @@ summary{cursor:pointer;font-weight:800}
   function saveCfg(){try{localStorage.setItem(SKEY,JSON.stringify(cfg))}catch(e){}}
   function cfgFields(){
     Object.keys(CF).forEach(function(id){$(id).value=cfg[CF[id]]||''});
+    $('tAuto').checked=cfg.todoAuto!==false;
     var ro=cfg.rOpts;if(Array.isArray(ro))['rOpt0','rOpt1','rOpt2','rOpt3'].forEach(function(id,i){if(ro[i]!==undefined)$(id).checked=!!ro[i]});
   }
   Object.keys(CF).forEach(function(id){$(id).oninput=function(){cfg[CF[id]]=this.value.trim();saveCfg();renderRekap()}});
@@ -797,19 +826,19 @@ summary{cursor:pointer;font-weight:800}
     var keys=Object.keys(dts).sort(),nEx=keys.filter(function(k){return rExcl[k]}).length;
     $('rTglList').innerHTML=keys.length?keys.map(function(k){var d=parse(k);return '<label class="rtl"><input type="checkbox" class="cb" data-rt="'+k+'"'+(rExcl[k]?'':' checked')+'> '+HARI[d.getDay()].slice(0,3)+', '+d.getDate()+' '+BULAN[d.getMonth()].slice(0,3)+' <small>('+dts[k]+')</small></label>'}).join(''):'<span style="color:var(--muted)">Belum ada tanggal bercatatan pada periode ini.</span>';
     $('rTglInfo').textContent=keys.length?'('+(keys.length-nEx)+' dari '+keys.length+' tanggal)':'';
-    function c(st){return l.filter(function(e){return e.status===st}).length}
+    function c(st){return l.filter(function(e){return st?e.status===st:!e.status}).length}
     var hn={};l.forEach(function(e){hn[e.tgl]=1});
     var rkv=$('rKat').value,rjv=$('rJudul').value,rfl=(rkv||rjv)?'<div class="k3">'+(rkv?'Kategori: '+esc(rkv):'')+(rkv&&rjv?' · ':'')+(rjv?'Pekerjaan: '+esc(rjv):'')+'</div>':'';
     var kop='<div class="kop">'+(cfg.sekolah?'<div class="k1">'+esc(cfg.sekolah)+'</div>':'')+'<div class="k2">REKAP PEKERJAAN PUSTAKAWAN</div><div class="k3">Periode: '+esc(rekapJudul()||'-')+'</div>'+rfl+'</div>';
-    var sum='<div class="rsum"><div><b>'+l.length+'</b>Total</div><div><b>'+c('Selesai')+'</b>Selesai</div><div><b>'+c('Proses')+'</b>Proses</div><div><b>'+c('Tertunda')+'</b>Tertunda</div><div><b>'+Object.keys(hn).length+'</b>Hari tercatat</div></div>';
+    var sum='<div class="rsum"><div><b>'+l.length+'</b>Total</div><div><b>'+c('Selesai')+'</b>Selesai</div><div><b>'+c('Proses')+'</b>Proses</div><div><b>'+c('Tertunda')+'</b>Tertunda</div>'+(c('')?'<div><b>'+c('')+'</b>Tanpa status</div>':'')+'<div><b>'+Object.keys(hn).length+'</b>Hari tercatat</div></div>';
     var body='';
     if(!l.length)body='<div class="empty">'+(m==='rentang'&&!($('rDari').value&&$('rSampai').value)?'Pilih tanggal awal dan akhir.':'Belum ada catatan pada periode ini.')+'</div>';
     else{
-      if($('rOpt1').checked){
-        var ck={};l.forEach(function(e){var o=ck[e.kat]=ck[e.kat]||{t:0,Selesai:0,Proses:0,Tertunda:0};o.t++;o[e.status]++});
-        var tot=0,kr=Object.keys(ck).sort(function(a,b){return ck[b].t-ck[a].t}).map(function(k){var o=ck[k];tot+=o.t;return '<tr><td>'+esc(k)+'</td><td class="n"><b>'+o.t+'</b></td><td class="n">'+o.Selesai+'</td><td class="n">'+o.Proses+'</td><td class="n">'+o.Tertunda+'</td></tr>'}).join('');
-        kr+='<tr><td><b>Total</b></td><td class="n"><b>'+tot+'</b></td><td class="n"><b>'+c('Selesai')+'</b></td><td class="n"><b>'+c('Proses')+'</b></td><td class="n"><b>'+c('Tertunda')+'</b></td></tr>';
-        body+='<h3 class="ct rh">Ringkasan per kategori</h3>'+tbl('<th>Kategori</th><th class="n">Jumlah</th><th class="n">Selesai</th><th class="n">Proses</th><th class="n">Tertunda</th>',kr);
+      if($('rOpt1').checked){var hb=l.some(function(e){return !e.status});
+        var ck={};l.forEach(function(e){var o=ck[e.kat]=ck[e.kat]||{t:0,Selesai:0,Proses:0,Tertunda:0,Tanpa:0};o.t++;o[e.status||'Tanpa']++});
+        var tot=0,kr=Object.keys(ck).sort(function(a,b){return ck[b].t-ck[a].t}).map(function(k){var o=ck[k];tot+=o.t;return '<tr><td>'+esc(k)+'</td><td class="n"><b>'+o.t+'</b></td><td class="n">'+o.Selesai+'</td><td class="n">'+o.Proses+'</td><td class="n">'+o.Tertunda+'</td>'+(hb?'<td class="n">'+o.Tanpa+'</td>':'')+'</tr>'}).join('');
+        kr+='<tr><td><b>Total</b></td><td class="n"><b>'+tot+'</b></td><td class="n"><b>'+c('Selesai')+'</b></td><td class="n"><b>'+c('Proses')+'</b></td><td class="n"><b>'+c('Tertunda')+'</b></td>'+(hb?'<td class="n"><b>'+c('')+'</b></td>':'')+'</tr>';
+        body+='<h3 class="ct rh">Ringkasan per kategori</h3>'+tbl('<th>Kategori</th><th class="n">Jumlah</th><th class="n">Selesai</th><th class="n">Proses</th><th class="n">Tertunda</th>'+(hb?'<th class="n">Tanpa status</th>':''),kr);
       }
       if($('rOpt2').checked){
         var cj={};l.forEach(function(e){var o=cj[e.judul]=cj[e.judul]||{t:0,kat:e.kat};o.t++});
@@ -820,7 +849,7 @@ summary{cursor:pointer;font-weight:800}
         var rr='',cur='',no=0;
         l.forEach(function(e){
           if(e.tgl!==cur){cur=e.tgl;rr+='<tr class="dg"><td colspan="5">'+fmtTgl(cur)+'</td></tr>'}
-          no++;rr+='<tr><td class="n">'+no+'</td><td>'+esc(e.kat)+'</td><td>'+esc(e.judul)+'</td><td><span class="tag '+esc(e.status)+'">'+esc(e.status)+'</span></td><td>'+esc(e.catatan||'')+'</td></tr>';
+          no++;rr+='<tr><td class="n">'+no+'</td><td>'+esc(e.kat)+'</td><td>'+esc(e.judul)+'</td><td>'+(e.status?'<span class="tag '+esc(e.status)+'">'+esc(e.status)+'</span>':'–')+'</td><td>'+esc(e.catatan||'')+'</td></tr>';
         });
         body+='<h3 class="ct rh">Rincian per tanggal</h3>'+tbl('<th class="n">No</th><th>Kategori</th><th>Pekerjaan</th><th>Status</th><th>Catatan</th>',rr);
       }
@@ -854,7 +883,7 @@ summary{cursor:pointer;font-weight:800}
     data.forEach(function(e){jm[e.tgl]=(jm[e.tgl]||0)+1});
     todos.forEach(function(t){if(t.tenggat&&!t.selesai){var o=tm[t.tenggat]=tm[t.tenggat]||{n:0,late:false};o.n++;if(t.tenggat<today)o.late=true}});
     arsip.forEach(function(a){if(a.tgl)am[a.tgl]=(am[a.tgl]||0)+1;if(a.pinjam&&a.pinjam.batas)am[a.pinjam.batas]=(am[a.pinjam.batas]||0)+1});
-    agenda.forEach(function(a){var c=parse(a.tgl),end=parse(a.tglSelesai||a.tgl);for(var n=0;c<=end&&n<62;n++){var kk=iso(c);ag[kk]=(ag[kk]||0)+1;c=new Date(c.getFullYear(),c.getMonth(),c.getDate()+1)}});
+    agenda.forEach(function(a){if(a.jenis==='libur')return;var c=parse(a.tgl),end=parse(a.tglSelesai||a.tgl);for(var n=0;c<=end&&n<62;n++){var kk=iso(c);ag[kk]=(ag[kk]||0)+1;c=new Date(c.getFullYear(),c.getMonth(),c.getDate()+1)}});
     var first=(new Date(calY,calM,1).getDay()+6)%7,dim=new Date(calY,calM+1,0).getDate();
     var h=['Sen','Sel','Rab','Kam','Jum','Sab','Min'].map(function(x){return '<div class="kh">'+x+'</div>'}).join('');
     for(var i=0;i<first;i++)h+='<div class="kd pad"></div>';
@@ -864,15 +893,18 @@ summary{cursor:pointer;font-weight:800}
       if(tm[k])b+='<i class="kb b2'+(tm[k].late?' late':'')+'">'+tm[k].n+'</i>';
       if(am[k])b+='<i class="kb b3">'+am[k]+'</i>';
       if(ag[k])b+='<i class="kb b4">'+ag[k]+'</i>';
-      h+='<button type="button" class="kd'+(k===today?' today':'')+(k===calSel?' sel':'')+'" data-kd="'+k+'" aria-label="'+fmtTgl(k)+'"><b>'+d+'</b><span class="kbs">'+b+'</span></button>';
+      var hd=holidayOn(k),sun=new Date(calY,calM,d).getDay()===0,hc=(sun||(hd&&hd.t==='n'))?' red':(hd?' lib':'');
+      h+='<button type="button" class="kd'+hc+(k===today?' today':'')+(k===calSel?' sel':'')+'" data-kd="'+k+'" aria-label="'+fmtTgl(k)+(hd?' – '+esc(hd.nama):'')+'"><b>'+d+'</b>'+(hd?'<span class="kn">'+esc(hd.nama)+'</span>':'')+'<span class="kbs">'+b+'</span></button>';
     }
     $('kalGrid').innerHTML=h;$('kalJudul').textContent=BULAN[calM]+' '+calY;
     var gs=agendaOn(calSel),js=data.filter(function(e){return e.tgl===calSel}),ts=todos.filter(function(t){return t.tenggat===calSel}),
         as=arsip.filter(function(a){return a.tgl===calSel}),ls=arsip.filter(function(a){return a.pinjam&&a.pinjam.batas===calSel});
     var sh=function(t){return '<h3 class="ct" style="font-size:15px;margin:16px 0 4px">'+t+'</h3>'};
     var out='<div class="bar noprint" style="align-items:center"><h2 class="ct" style="flex:2 1 220px;margin:0">'+fmtTgl(calSel)+'</h2><button class="btn" data-addday="'+calSel+'" style="flex:0 0 auto">+ Pekerjaan</button><button class="btn soft" data-tadd="'+calSel+'" style="flex:0 0 auto">+ To-do</button><button class="btn soft" data-agadd="'+calSel+'" style="flex:0 0 auto">+ Agenda</button></div>';
+    var hd0=holidayOn(calSel),sun0=parse(calSel).getDay()===0;
+    if(hd0||sun0){var red0=sun0||(hd0&&hd0.t==='n');out+='<div class="alert '+(red0?'late':'lib')+'" style="margin:12px 0 0;padding:10px 14px"><div>'+(red0?'🔴':'🟦')+'</div><div><b>'+(hd0?(hd0.t==='n'?'Libur nasional':hd0.t==='c'?'Cuti bersama':'Hari libur'):'Hari Minggu')+'</b>'+(hd0?': '+esc(hd0.nama):'')+'</div></div>'}
     if(gs.length)out+=sh('Agenda')+gs.map(agItem).join('');
-    if(js.length)out+=sh('Jurnal pekerjaan')+js.map(function(e){return itemHtml(e,true)}).join('');
+    if(js.length)out+=sh('Jurnal pekerjaan')+js.map(miniJ).join('');
     if(ts.length)out+=sh('Tenggat to-do')+ts.map(function(t){
       var di=t.selesai?null:dueInfo(t.tenggat);
       return '<div class="titem'+(t.selesai?' done':'')+'"><button class="chk'+(t.selesai?' on':'')+'" data-ttog="'+t.id+'" aria-label="Tandai selesai">'+(t.selesai?'✓':'')+'</button><div><h3>'+esc(t.judul)+'</h3><div>'+(di?'<span class="due '+di.c+'">'+di.x+'</span>':'<span class="due none">Selesai</span>')+'</div></div><div></div></div>';
@@ -909,14 +941,14 @@ summary{cursor:pointer;font-weight:800}
   function agendaOn(k){return agenda.filter(function(a){return a.tgl<=k&&(a.tglSelesai||a.tgl)>=k}).sort(function(a,b){return (a.jam||'99')<(b.jam||'99')?-1:1})}
   function agItem(a){
     var multi=a.tglSelesai&&a.tglSelesai!==a.tgl;
-    return '<div class="item"><div><h3>'+esc(a.judul)+'</h3><div><span class="tag Ag">📅 '+(multi?sd(a.tgl)+' – '+sd(a.tglSelesai):'Agenda')+'</span>'+(a.jam?'<span class="tag">🕒 '+esc(a.jam)+'</span>':'')+(a.tempat?'<span class="tag">📍 '+esc(a.tempat)+'</span>':'')+'</div>'+(a.catatan?'<p>'+esc(a.catatan)+'</p>':'')+'</div>'+
+    return '<div class="item"><div><h3>'+esc(a.judul)+'</h3><div><span class="tag Ag">'+(a.jenis==='libur'?'🏖️ ':'📅 ')+(multi?sd(a.tgl)+' – '+sd(a.tglSelesai):(a.jenis==='libur'?'Hari libur':'Agenda'))+'</span>'+(a.jam?'<span class="tag">🕒 '+esc(a.jam)+'</span>':'')+(a.tempat?'<span class="tag">📍 '+esc(a.tempat)+'</span>':'')+'</div>'+(a.catatan?'<p>'+esc(a.catatan)+'</p>':'')+'</div>'+
       '<div class="acts"><button class="link" data-agedit="'+a.id+'">Ubah</button><button class="link" style="color:var(--bad)" data-agdel="'+a.id+'">Hapus</button></div></div>';
   }
   function agClose(){agEditing=0;$('agForm').classList.add('hide')}
   function agOpen(a,tgl){
     agEditing=a?a.id:0;$('agForm').classList.remove('hide');
     $('agFormJudul').textContent=a?'Ubah agenda':'Agenda baru';
-    $('agJudul').value=a?a.judul:'';$('agTgl').value=a?a.tgl:(tgl||calSel);$('agAkhir').value=a&&a.tglSelesai||'';
+    $('agJenis').value=a&&a.jenis||'agenda';$('agJudul').value=a?a.judul:'';$('agTgl').value=a?a.tgl:(tgl||calSel);$('agAkhir').value=a&&a.tglSelesai||'';
     $('agJam').value=a&&a.jam||'';$('agTempat').value=a&&a.tempat||'';$('agCatatan').value=a&&a.catatan||'';
     $('agSimpan').textContent=a?'Simpan perubahan':'Simpan agenda';
     window.scrollTo(0,0);$('agJudul').focus();
@@ -936,7 +968,7 @@ summary{cursor:pointer;font-weight:800}
     if(!j){toast('Isi judul agenda');$('agJudul').focus();return}
     if(!t){toast('Pilih tanggal agenda');return}
     if(ak&&ak<t){toast('Tanggal akhir tidak boleh sebelum tanggal mulai');return}
-    var o={id:agEditing||Date.now(),tgl:t,tglSelesai:ak&&ak!==t?ak:'',judul:j,jam:$('agJam').value,tempat:$('agTempat').value.trim(),catatan:$('agCatatan').value.trim()};
+    var o={id:agEditing||Date.now(),tgl:t,tglSelesai:ak&&ak!==t?ak:'',jenis:$('agJenis').value,judul:j,jam:$('agJam').value,tempat:$('agTempat').value.trim(),catatan:$('agCatatan').value.trim()};
     var baru=!agEditing;
     if(agEditing)agenda=agenda.map(function(a){return a.id===agEditing?o:a});else agenda.push(o);
     var p=t.split('-');calSel=t;calY=+p[0];calM=+p[1]-1;
@@ -945,9 +977,59 @@ summary{cursor:pointer;font-weight:800}
   document.addEventListener('click',function(ev){
     var el=ev.target.closest?ev.target.closest('[data-agadd],[data-agedit],[data-agdel]'):null;if(!el)return;
     var d=el.dataset;
-    if(d.agadd){agOpen(null,d.agadd==='sel'?calSel:d.agadd)}
+    if(d.agadd){agOpen(null,d.agadd==='sel'?calSel:d.agadd);if(d.agjenis)$('agJenis').value=d.agjenis}
     else if(d.agedit){var a=agenda.filter(function(x){return x.id===+d.agedit})[0];if(a)agOpen(a)}
     else if(d.agdel){var b=agenda.filter(function(x){return x.id===+d.agdel})[0];if(b&&confirm('Hapus agenda "'+b.judul+'"?')){agenda=agenda.filter(function(x){return x.id!==b.id});save();render();toast('Agenda dihapus')}}
+  });
+
+  /* libur, hint, to-do di jurnal */
+  /* Sumber: SKB 3 Menteri tentang Hari Libur Nasional dan Cuti Bersama 2026 dan 2027 (n = libur nasional, c = cuti bersama) */
+  var HOLI={'2026-01-01':['Tahun Baru 2026 Masehi','n'],'2026-01-16':['Isra Mikraj Nabi Muhammad saw.','n'],'2026-02-16':['Cuti Bersama Imlek','c'],'2026-02-17':['Tahun Baru Imlek 2577','n'],'2026-03-18':['Cuti Bersama Nyepi','c'],'2026-03-19':['Hari Suci Nyepi','n'],'2026-03-20':['Cuti Bersama Idulfitri','c'],'2026-03-21':['Idulfitri 1447 H','n'],'2026-03-22':['Idulfitri 1447 H','n'],'2026-03-23':['Cuti Bersama Idulfitri','c'],'2026-03-24':['Cuti Bersama Idulfitri','c'],'2026-04-03':['Wafat Yesus Kristus','n'],'2026-04-05':['Paskah','n'],'2026-05-01':['Hari Buruh Internasional','n'],'2026-05-14':['Kenaikan Yesus Kristus','n'],'2026-05-15':['Cuti Bersama Kenaikan Yesus Kristus','c'],'2026-05-27':['Iduladha 1447 H','n'],'2026-05-28':['Cuti Bersama Iduladha','c'],'2026-05-31':['Hari Raya Waisak 2570','n'],'2026-06-01':['Hari Lahir Pancasila','n'],'2026-06-16':['Tahun Baru Islam 1448 H','n'],'2026-08-17':['Hari Kemerdekaan RI','n'],'2026-08-25':['Maulid Nabi Muhammad saw.','n'],'2026-12-24':['Cuti Bersama Natal','c'],'2026-12-25':['Hari Raya Natal','n'],'2027-01-01':['Tahun Baru 2027 Masehi','n'],'2027-01-05':['Isra Mikraj Nabi Muhammad saw.','n'],'2027-02-05':['Cuti Bersama Imlek','c'],'2027-02-06':['Tahun Baru Imlek 2578','n'],'2027-03-08':['Hari Suci Nyepi','n'],'2027-03-09':['Cuti Bersama Idulfitri','c'],'2027-03-10':['Idulfitri 1448 H','n'],'2027-03-11':['Idulfitri 1448 H','n'],'2027-03-12':['Cuti Bersama Idulfitri','c'],'2027-03-15':['Cuti Bersama Idulfitri','c'],'2027-03-25':['Cuti Bersama Wafat Yesus Kristus','c'],'2027-03-26':['Wafat Yesus Kristus','n'],'2027-03-28':['Paskah','n'],'2027-05-01':['Hari Buruh Internasional','n'],'2027-05-06':['Kenaikan Yesus Kristus','n'],'2027-05-17':['Iduladha 1448 H','n'],'2027-05-18':['Cuti Bersama Iduladha','c'],'2027-05-19':['Cuti Bersama Waisak','c'],'2027-05-20':['Hari Raya Waisak 2571','n'],'2027-06-01':['Hari Lahir Pancasila','n'],'2027-06-06':['Tahun Baru Islam 1449 H','n'],'2027-08-15':['Maulid Nabi Muhammad saw.','n'],'2027-08-17':['Hari Kemerdekaan RI','n'],'2027-12-24':['Cuti Bersama Natal','c'],'2027-12-25':['Hari Raya Natal','n'],'2027-12-26':['Isra Mikraj Nabi Muhammad saw.','n']};
+  function holidayOn(k){
+    var h=HOLI[k];if(h)return {t:h[1],nama:h[0]};
+    var l=agenda.filter(function(a){return a.jenis==='libur'&&a.tgl<=k&&(a.tglSelesai||a.tgl)>=k})[0];
+    return l?{t:'x',nama:l.judul}:null;
+  }
+  function isOpen(e){return e.status==='Proses'||e.status==='Tertunda'}
+  function miniJ(e){return '<div class="mini"><b>'+esc(e.judul)+'</b><span class="tag">'+esc(e.kat)+'</span>'+(e.status?'<span class="tag '+esc(e.status)+'">'+esc(e.status)+'</span>':'')+'</div>'}
+  function openPrev(kat,judul){
+    var j=(judul||'').trim().toLowerCase();if(!j||editing)return [];
+    return data.filter(function(e){return e.kat===kat&&e.judul.toLowerCase()===j&&isOpen(e)});
+  }
+  function hintHtml(kat,judul){
+    var l=openPrev(kat,judul);if(!l.length)return '';
+    var last=l.reduce(function(m,e){return e.tgl>m?e.tgl:m},'');
+    return 'ℹ️ Pekerjaan ini masih belum selesai di '+l.length+' catatan sebelumnya (terakhir '+sd(last)+'). <button type="button" class="link" data-closeprev="1" style="padding:0 0 0 4px">Tandai semuanya selesai</button>';
+  }
+  function updHint(box){box.querySelector('[data-hint]').innerHTML=hintHtml(box.querySelector('[data-f=kat]').value,box.querySelector('[data-f=judul]').value)}
+  $('rows').addEventListener('input',function(ev){var t=ev.target;if(t.dataset.f==='judul')updHint(t.closest('.rowbox'))});
+  function renderTPanel(){
+    var el=$('tPanel');if(!el)return;
+    var tg=$('fTgl').value;
+    var l=(editing||!tg)?[]:todos.filter(function(t){return !t.selesai&&t.tenggat&&t.tenggat<=tg}).sort(todoSort);
+    if(!l.length){el.innerHTML='';return}
+    el.innerHTML='<div class="alert soon" style="margin-bottom:14px"><div style="font-size:22px">📌</div><div style="flex:1"><b>To-do yang jatuh tempo (sampai '+sd(tg)+')</b><div style="font-size:13px;color:var(--muted)">Isi statusnya dari sini. Otomatis tercatat di jurnal tanggal '+sd(tg)+'.</div>'+
+      l.slice(0,5).map(function(t){var di=dueInfo(t.tenggat);return '<div class="mini"><b>'+esc(t.judul)+'</b><span class="due '+di.c+'">'+di.x+'</span><span style="flex:1"></span><button type="button" class="link" data-tj="s:'+t.id+'">Selesai</button><button type="button" class="link" data-tj="p:'+t.id+'">Proses</button></div>'}).join('')+
+      (l.length>5?'<div style="font-size:13px">dan '+(l.length-5)+' lainnya di menu To-do</div>':'')+'</div></div>';
+  }
+  $('fTgl').onchange=renderTPanel;
+  $('tAuto').onchange=function(){cfg.todoAuto=this.checked;saveCfg()};
+  document.addEventListener('click',function(ev){
+    var el=ev.target.closest?ev.target.closest('[data-closeprev],[data-tj],[data-openlist]'):null;if(!el)return;
+    var d=el.dataset;
+    if(d.closeprev){
+      var box=el.closest('.rowbox'),l=openPrev(box.querySelector('[data-f=kat]').value,box.querySelector('[data-f=judul]').value);
+      l.forEach(function(e){e.status='Selesai'});save();render();toast(l.length+' catatan sebelumnya ditandai selesai');
+    }else if(d.tj){
+      var p=d.tj.split(':'),t=todos.filter(function(x){return x.id===+p[1]})[0];if(!t)return;
+      var tg=$('fTgl').value||iso(new Date()),ne={id:Date.now(),tgl:tg,kat:t.kat||kats[0],judul:t.judul,status:p[0]==='s'?'Selesai':'Proses',catatan:t.catatan||''},n=0;
+      if(p[0]==='s'){
+        data.forEach(function(x){if(x.kat===ne.kat&&x.judul.toLowerCase()===ne.judul.toLowerCase()&&isOpen(x)){x.status='Selesai';n++}});
+        t.selesai=true;t.jurnalId=ne.id;
+      }
+      data.push(ne);save();render();
+      toast(p[0]==='s'?'Dicatat selesai di jurnal'+(n?' ('+n+' catatan sebelumnya ikut selesai)':''):'Dicatat sebagai Proses; to-do tetap terbuka');
+    }else if(d.openlist){show('jurnal');$('qStatus').value='open';$('qBulan').value='';renderJurnal()}
   });
 
   /* to-do */
@@ -984,7 +1066,7 @@ summary{cursor:pointer;font-weight:800}
   }
   $('rows').addEventListener('change',function(ev){
     var t=ev.target;if(t.dataset.f!=='kat')return;
-    t.closest('.rowbox').querySelector('datalist').innerHTML=titleOpts(t.value);
+    t.closest('.rowbox').querySelector('datalist').innerHTML=titleOpts(t.value);updHint(t.closest('.rowbox'));
   });
   $('tKat').onchange=fillTdl;
   $('tFilter').oninput=renderTodo;
@@ -1001,7 +1083,19 @@ summary{cursor:pointer;font-weight:800}
     var d=ev.target.dataset;if(!d)return;
     function cari(id){return todos.filter(function(x){return x.id===+id})[0]}
     if(d.go){show(d.go)}
-    else if(d.ttog){todos.forEach(function(x){if(x.id===+d.ttog)x.selesai=!x.selesai});save();render()}
+    else if(d.ttog){
+      var tt=cari(d.ttog);if(!tt)return;
+      tt.selesai=!tt.selesai;var note='';
+      if(tt.selesai&&cfg.todoAuto!==false&&!tt.jurnalId){
+        var td=iso(new Date()),tk=tt.kat||kats[0];
+        if(!data.some(function(x){return x.tgl===td&&x.kat===tk&&x.judul.toLowerCase()===tt.judul.toLowerCase()})){
+          var ne={id:Date.now(),tgl:td,kat:tk,judul:tt.judul,status:'Selesai',catatan:tt.catatan||''};data.push(ne);tt.jurnalId=ne.id;note='Dicatat juga ke jurnal hari ini';
+        }
+      }else if(!tt.selesai&&tt.jurnalId){
+        var jid=tt.jurnalId;data=data.filter(function(x){return x.id!==jid});tt.jurnalId=null;note='Catatan jurnalnya ikut dihapus';
+      }
+      save();render();if(note)toast(note);
+    }
     else if(d.tedit){
       var t=cari(d.tedit);if(!t)return;
       tEditing=t.id;$('tJudul').value=t.judul;$('tTenggat').value=t.tenggat||'';$('tKat').innerHTML=optHtml(t.kat);fillTdl();$('tCatatan').value=t.catatan||'';
